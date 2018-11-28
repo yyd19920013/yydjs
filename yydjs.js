@@ -420,6 +420,25 @@ function autoEvent(obj,event){
     }
 };
 
+//生成32位唯一字符串(大小写字母数字组合)
+function soleString32(){
+    var str='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var timestamp=+new Date()+Math.floor(Math.random()*10);
+    var resultStr='';
+
+    for(var i=0;i<19;i++){
+        resultStr+=str.charAt(Math.floor(Math.random()*str.length));
+    }
+    resultStr+=timestamp;
+
+    resultStr=resultStr.split('');
+    resultStr.sort(function(a,b){
+        return Math.random()-0.5;
+    });
+    resultStr=resultStr.join('');
+    return resultStr;
+};
+
 //自定义事件的实现
 var customEvent={
     json:{},
@@ -1003,9 +1022,28 @@ function formatSecond(seconds,mode){
 };
 
 //根据出生日期获取年龄
-function getAge(date){
-    var diff=new Date()-normalDate(date);
-    var age=diff>0?Math.ceil(diff/(1000*60*60*24*365)):0;
+function getAge(date,real){
+    var diff=(new Date()-normalDate(date))/(1000*60*60*24*365);
+    var age=diff>0?(real?diff:Math.floor(diff)):0;
+
+    return age;
+};
+
+//根据出生日期获取年龄
+function getAge1(date,real){
+    var oDate=normalDate(date);
+    var oYear=oDate.getFullYear();
+    var oMonth=oDate.getMonth();
+    var oDay=oDate.getDate();
+    var nDate=new Date();
+    var nYear=nDate.getFullYear();
+    var nMonth=nDate.getMonth();
+    var nDay=nDate.getDate();
+    var dYear=nYear-oYear;
+    var dMonth=(nMonth-oMonth)/12;
+    var dDay=(nDay-oDay)/365;
+    var diff=dYear+dMonth+dDay;
+    var age=diff>0?(real?diff:Math.floor(diff)):0;
 
     return age;
 };
@@ -3241,25 +3279,6 @@ function pullReload(){
 /*
     1.10、自我拓展
 */
-
-//生成32位唯一字符串(大小写字母数字组合)
-function soleString32(){
-    var str='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    var timestamp=+new Date()+Math.floor(Math.random()*10);
-    var resultStr='';
-
-    for(var i=0;i<19;i++){
-        resultStr+=str.charAt(Math.floor(Math.random()*str.length));
-    }
-    resultStr+=timestamp;
-
-    resultStr=resultStr.split('');
-    resultStr.sort(function(a,b){
-        return Math.random()-0.5;
-    });
-    resultStr=resultStr.join('');
-    return resultStr;
-};
 
 //根据数据模板创建元素(防止xss攻击)
 //el:元素名称string
