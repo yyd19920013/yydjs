@@ -2420,7 +2420,62 @@ function openMoblieDebug(whiteList){
 
 //json克隆副本
 function copyJson(json){
-    return json?JSON.parse(JSON.stringify(json)):'';
+    return json?JSON.parse(JSON.stringify(json)):json;
+};
+
+//加密函数，需要引入crypto-js
+//加密顺序，des->base64->uri
+/*
+    例：
+    encodeDesBase64URI({a:'123'})//5sxYjt0LduGHx1ZBXdfimA%3D%3D
+*/
+function encodeDesBase64URI(obj,key,iv){
+    if(!obj)return obj;
+
+    var keyHex=CryptoJS.enc.Utf8.parse(key||'111111678678');
+    var ivHex=CryptoJS.enc.Utf8.parse(iv||'\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008');
+
+    try{
+        obj=JSON.stringify(obj);
+        obj=CryptoJS.DES.encrypt(obj,keyHex,{
+            iv:ivHex,
+            mode:CryptoJS.mode.CBC,
+            padding:CryptoJS.pad.Pkcs7,
+        });
+        obj=CryptoJS.enc.Base64.stringify(obj.ciphertext);
+        obj=encodeURIComponent(obj);
+    }catch(e){}
+
+    return obj;
+};
+
+//解密函数，需要引入crypto-js
+//解密顺序，uri->base64->des
+/*
+    例：
+    decodeURIBase64Des('5sxYjt0LduGHx1ZBXdfimA%3D%3D')//{a:'123'}
+*/
+function decodeURIBase64Des(obj,key,iv){
+    if(!obj)return obj;
+
+    var keyHex=CryptoJS.enc.Utf8.parse(key||'111111678678');
+    var ivHex=CryptoJS.enc.Utf8.parse(iv||'\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008');
+
+    try{
+        obj=decodeURIComponent(obj);
+        obj={
+            ciphertext:CryptoJS.enc.Base64.parse(obj),
+        };
+        obj=CryptoJS.DES.decrypt(obj,keyHex,{
+            iv:ivHex,
+            mode:CryptoJS.mode.CBC,
+            padding:CryptoJS.pad.Pkcs7,
+        });
+        obj=obj.toString(CryptoJS.enc.Utf8);
+        obj=JSON.parse(obj);
+    }catch(e){}
+
+    return obj;
 };
 
 //根据设备宽度来写相对布局,
@@ -2433,7 +2488,7 @@ function htmlFontSize(){
 
         if(fontSize<100)fontSize=100;
         if(fontSize>208)fontSize=208;
-        document.getElementsByTagName('html')[0].style.fontSize=fontSize+'px';
+        document.documentElement.style.fontSize=fontSize+'px';
     };
     change();
     window.onresize=change;
