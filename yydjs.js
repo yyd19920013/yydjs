@@ -33,6 +33,8 @@
         8.1、vue项目中用到
     9、react框架
         9.1、react项目中用到
+    10、严格模式
+        10.1、严格模式使用规则
 */
 
 /*
@@ -298,12 +300,14 @@ function controlBodyScroll(disableScroll,goTop){
 
     if(disableScroll){
         oHtml.style.height='100%';
+        oHtml.style.overflowY='hidden';
         oBody.style.height='100%';
         oBody.style.overflowY='hidden';
     }else{
         oHtml.style.height='auto';
+        oHtml.style.overflowY='visible';
         oBody.style.height='auto';
-        oBody.style.overflowY='auto';
+        oBody.style.overflowY='visible';
     }
 
     if(goTop){
@@ -748,9 +752,9 @@ var sStore=new Store().init({
     1.4、增强函数
 */
 
-//判断数据类型的方法（对typeof的增强，7种常用类型的判断，返回小写字符串）
+//判断数据类型的方法（对typeof的增强，8种常用类型的判断，返回小写字符串）
 function Type(obj){
-    var arr=['null','nan','function','number','string','array','object'];
+    var arr=['null','undefined','nan','function','number','string','array','object'];
     if(obj===null){
         return 'null';
     }
@@ -842,12 +846,10 @@ function yydTimer(fn,msec){
 
 //判断json是否有某个key，不管是否为空
 function jsonHasKey(json,key){
-    var exist=false;
-
-    if(key in json){
-        exist=true;
+    if(Type(json)!='object'){
+        return false;
     }
-    return exist;
+    return key in json;
 };
 
 //判断数组、json、字符串是否所有值都不为空
@@ -856,20 +858,20 @@ function allHaveValue(obj){
 
     if(Type(obj)=='array'){
         for(var i=0;i<obj.length;i++){
-            if(!obj[i]||obj[i]==0){
+            if(!obj[i]&&obj[i]!==0){
                 bool=false;
                 break;
             }
         }
     }else if(Type(obj)=='object'){
         for(var attr in obj){
-            if(!obj[attr]||obj[i]==0){
+            if(!obj[attr]&&obj[attr]!==0){
                 bool=false;
                 break;
             }
         }
     }else{
-        if(!obj||obj==0){
+        if(!obj&&obj!==0){
             bool=false;
         }
     }
@@ -974,9 +976,11 @@ function toTwo(n){
 };
 
 //算出本月天数
-//getMonth获得的月份是从0开始，要加一
+//getMonth获得的月份是从0开始，要加1
+//下月第0天就是最后一天，-1=倒数第二天，国外月份从0开始,逗号隔开年月日new Date之后月份要大一个月，字符串是正常的
 function manyDay(year,month){
-    var nextMonth=new Date(year,month,0);//下月第0天就是最后一天，-1=倒数第二天，逗号隔开格式化之后月份要大一天（外国默认月份0开始），字符串是正常的
+    var nextMonth=new Date(year,month,0);
+
     return nextMonth.getDate();
 };
 
@@ -1029,7 +1033,7 @@ function getAge(date,real){
     return age;
 };
 
-//根据出生日期获取年龄
+//根据出生日期获取年龄1
 function getAge1(date,real){
     var oDate=normalDate(date);
     var oYear=oDate.getFullYear();
@@ -1054,28 +1058,29 @@ function getAge1(date,real){
 //月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，
 //年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字)
 //例子：
-//dateFormat0(new Date(),'yyyy-MM-dd hh:mm:ss.S') ==> 2006-07-02 08:09:04.423
-//dateFormat0(new Date(),'yyyy-M-d h:m:s.S')      ==> 2006-7-2 8:9:4.18
+//dateFormat0(new Date(),'yyyy-MM-dd hh:mm:ss.S')，2018-12-21 17:24:33.664
+//dateFormat0(new Date(),'y-M-d h:m:s.S/q')，2018-12-21 17:24:33.666/4
 function dateFormat0(oDate,fmt){
     var fmt=fmt||'yyyy/MM/dd hh:mm:ss';
-    var oDate=normalDate(oDate);
+    var oDate=normalDate(oDate||new Date());
     var date={
-        "M+":oDate.getMonth()+1,                 //月份
-        "d+":oDate.getDate(),                    //日
-        "h+":oDate.getHours(),                   //小时
-        "m+":oDate.getMinutes(),                 //分
-        "s+":oDate.getSeconds(),                 //秒
-        "q+":Math.floor((oDate.getMonth()+3)/3), //季度，+3为了好取整
-        "S":oDate.getMilliseconds()              //毫秒
+        'y+':oDate.getFullYear(),              //年
+        'M+':oDate.getMonth()+1,               //月
+        'd+':oDate.getDate(),                  //日
+        'h+':oDate.getHours(),                 //时
+        'm+':oDate.getMinutes(),               //分
+        's+':oDate.getSeconds(),               //秒
+        'S':oDate.getMilliseconds(),           //毫秒
+        'q+':Math.ceil((oDate.getMonth()+1)/3),//季度，+3为了好取整
     };
-
-    if(/(y+)/.test(fmt)){//RegExp.$1(正则表达式的第一个匹配，一共有99个匹配)
-        fmt=fmt.replace(RegExp.$1,(oDate.getFullYear()+'').substr(4-RegExp.$1.length));
-    }
+    var result='';
+    var value='';
 
     for(var attr in date){
         if(new RegExp('('+attr+')').test(fmt)){
-            fmt=fmt.replace(RegExp.$1,RegExp.$1.length==1?date[attr]:('00'+date[attr]).substring((date[attr]+'').length));
+            result=RegExp.$1;
+            value=date[attr]+'';
+            fmt=fmt.replace(result,result.length==1?value:(attr=='y+'?value.substring(4-result.length):toTwo(value)));
         }
     }
 
@@ -1750,39 +1755,85 @@ function getUserMedia(options){
     1.8、网络请求
 */
 
-//ajax
-//ajax({//示例
-//  url:'',
-//  type:'post',
-//  data:'',
-//  contentType:'',
-//  closeToForm:false,
-//  dataType:'json',
-//  headers:{},
-//  xhr:function(xhr){
-//      console.log(xhr);
-//  },
-//  progress:function(ev){
-//      console.log(ev);
-//  },
-//  success:function(data){
-//      console.log(data);
-//  },
-//  error:function(data){
-//      console.log(data);
-//  },
-//});
-function ajax(json){
+//ajax包装
+//支持回调函数和promise两种风格
+/*
+    参数：
+    ajaxWrap({
+        url:'',//请求地址
+        type:'post',//请求方法
+        data:'',//请求传参
+        contentType:'',//设置请求头contentType
+        closeToForm:false,//关闭json转form格式
+        dataType:'json',//返回数据类型
+        headers:{},//请求头设置
+        timeout:5000,//超时设置
+        getXhr:function(xhr){//获取xhr对象的函数
+            console.log(xhr);
+        },
+        progress:function(ev){//上传文件时触发的函数
+            console.log(ev);
+        },
+        success:function(res){//请求状态成功且code成功的回调
+            console.log(res);
+        },
+        finally:function(data){//请求状态成功的回调，promise模式在catch里捕获
+            console.log(data);
+        },
+        error:function(error){//请求状态错误的回调
+            console.log(error);
+        },
+    });
+*/
+/*
+    例子：
+    回调函数风格：
+    ajaxWrap({
+        code:0,
+        url:'https://www.muyouche.com/action2/HomePageInfo.ashx',
+        type:'post',
+        success:function(res){
+            console.log(res);
+        },
+    });
+
+    promise风格：
+    ajaxWrap({
+        code:0,
+        url:'https://www.muyouche.com/action2/HomePageInfo.ashx',
+        type:'post',
+    }).then((res)=>{
+        console.log(res);
+    });
+*/
+function ajaxWrap(config){
     var str='';
+    var errorPromise={
+        then:function(){
+            console.error('这是一个无效的then函数，如果要使用promise方式，不要在config对象里配置success、error、finally函数');
+            return this;
+        },
+        catch:function(){
+            console.error('这是一个无效的catch函数，如果要使用promise方式，不要在config对象里配置success、error、finally函数');
+            return this;
+        },
+        finally:function(){
+            console.error('这是一个无效的finally函数，如果要使用promise方式，不要在config对象里配置success、error、finally函数');
+            return this;
+        },
+    };
+    var isTimeout=false;
 
-    json.type=json.type.toLowerCase()||'get';
-    json.dataType=json.dataType.toLowerCase()||'json';
+    config.type=config.type?config.type.toLowerCase():'get';
+    config.dataType=config.dataType?config.dataType.toLowerCase():'json';
+    config.code=config.code||config.code==0?config.code:200;
+    config.timeout=config.timeout||config.timeout==0?config.timeout:20000;
 
-    if(!json.closeToForm&&json.data&&Type(json.data)=='object'){
-        for(var attr in json.data){
-            str+=attr+'='+json.data[attr]+'&';
+    if(!config.closeToForm&&config.data&&Type(config.data)=='object'){
+        for(var attr in config.data){
+            str+=attr+'='+config.data[attr]+'&';
         }
-        json.data=str.substring(0,str.length-1);
+        config.data=str.substring(0,str.length-1);
     }
 
     var xhr=null;
@@ -1793,39 +1844,43 @@ function ajax(json){
         xhr=new ActiveXObject('Microsoft.XMLHTTP');
     }
 
-    if(json.xhr&&Type(json.xhr)=='function'){
-        xhr=json.xhr(xhr);
+    if(config.getXhr&&Type(config.getXhr)=='function'){
+        xhr=config.getXhr(xhr);
     }
 
-    if(xhr.upload&&json.progress&&Type(json.progress)=='function'){
-        bind(xhr.upload,'progress',json.progress);
+    if(xhr.upload&&config.progress&&Type(config.progress)=='function'){
+        bind(xhr.upload,'progress',config.progress);
     }
 
-    if(json.type=='get'&&json.data){
-        json.url+='?'+json.data;
+    if(config.type=='get'&&config.data){
+        config.url+='?'+config.data;
     }
 
-    xhr.open(json.type,json.url,true);
+    xhr.open(config.type,config.url,true);
 
-    if(json.type=='get'){
+    if(config.type=='get'){
         xhr.send();
     }else{
-        if(!json.closeToForm)xhr.setRequestHeader('content-type','application/x-www-form-urlencoded');
-        if(json.headers&&Type(json.headers)=='object'){
-            for(var attr in json.headers){
-                xhr.setRequestHeader(attr,json.headers[attr]);
+        if(!config.closeToForm)xhr.setRequestHeader('content-type','application/x-www-form-urlencoded');
+        if(config.headers&&Type(config.headers)=='object'){
+            for(var attr in config.headers){
+                xhr.setRequestHeader(attr,config.headers[attr]);
             }
         }
-        xhr.send(json.data);
+        xhr.send(config.data);
     }
 
-    xhr.onreadystatechange=function(){
+    if(Type(config.timeout)=='number'){
+        xhr.timeout=config.timeout;
+    }
+
+    function onreadystatechangeFn(resolve,reject){
         var data=null;
 
         if(xhr.readyState==4){
             if(xhr.status==200){
                 try{
-                    switch(json.dataType){
+                    switch(config.dataType){
                         case 'text':
                                 data=xhr.responseText;
                             break;
@@ -1848,84 +1903,171 @@ function ajax(json){
                                 data=oScript;
                             break;
                     }
-
                 }catch(e){
                     console.log(e);
                 }
-                json.success&&Type(json.success)=='function'&&json.success(data);
+
+                config.finally&&config.finally(data);
+                if(data.code==config.code){
+                    if(resolve&&(Type(resolve)=='function')){
+                        return resolve(data);
+                    }else{
+                        config.success&&config.success(data);
+                    }
+                }else{
+                    if(!config.noHint){
+                        if(data.msg){
+                            alerts(data.msg);
+                        }else{
+                            alerts('请求代码错误');
+                        }
+                    }
+
+                    if(reject&&(Type(reject)=='function')){
+                        return reject(data);
+                    }
+                }
             }else{
-                json.error&&Type(json.error)=='function'&&json.error(xhr.status);
+                if(xhr.status==0){
+                    alerts('请求超时');
+                }else{
+                    alerts('网络异常'+xhr.status);
+                }
+                if(reject&&(Type(reject)=='function')){
+                    return reject(xhr.status);
+                }else{
+                    config.error&&config.error(xhr.status);
+                }
             }
         }
     };
-};
 
-//对项目返回参数的处理，对ajax的再次封装
-function ajaxWrap(json){
-    ajax({
-        url:json.url,
-        type:json.type,
-        data:json.data,
-        closeToForm:json.closeToForm,
-        dataType:json.dataType,
-        headers:json.headers,
-        xhr:json.xhr,
-        progress:json.progress,
-        before:function(xhr){
-            //loading显示处理
-        },
-        after:function(xhr){
-            //loading隐藏处理
-        },
-        success:function(data){
-            //只要成功都会走
-            json.finally&&json.finally(res);
+    if(config.success||config.finally||config.error){
+        xhr.onreadystatechange=onreadystatechangeFn;
 
-            //成功code已经失败code处理
-            if(Type(data)=="object"){
-                if(data.code=='0000'){
-                    json.success&&json.success(data);
-                    return;
-                }else if(data.msg){
-                    alerts(data.msg);
-                    return;
-                }
-                alerts("网络异常");
-            }
-        },
-        error:json.error,
-    });
+        return errorPromise;
+    }else{
+        return new Promise(function(resolve,reject){
+            xhr.onreadystatechange=function(){
+                onreadystatechangeFn(resolve,reject);
+            };
+        });
+    }
 };
 
 //axios包装
-//success（状态200执行回调函数）
-//error（状态不为200的回调函数）
-//finally（不管状态为什么都走的回调函数）
-//all（多个axios请求，也可以使用axios.all）
+//支持回调函数和promise两种风格
 /*
+    参数：
+    axiosWrap({
+        url:'',//请求地址
+        method:'post',//请求方法
+        params:'',//请求传参
+        responseType:'json',//返回数据类型
+        headers:{},//请求头设置
+        timeout:20000,//请求超时设置
+        onUploadProgress:function(ev){//上传文件时触发的函数
+            console.log(ev);
+        },
+        onDownloadProgress:function(ev){//下载文件时触发的函数
+            console.log(ev);
+        },
+        success:function(res){//请求状态成功且code成功的回调
+            console.log(res);
+        },
+        finally:function(data){//请求状态成功的回调，promise模式在catch里捕获
+            console.log(data);
+        },
+        error:function(error){//请求状态错误的回调
+            console.log(error);
+        },
+    });
+*/
+/*
+    例子：
+    单个请求：
+    回调函数风格：
+    axiosWrap({
+        code:0,
+        url:'https://www.muyouche.com/action2/HomePageInfo.ashx',
+        method:'post',
+        success(res){
+            console.log(res);
+        },
+    });
+
+    promise风格：
+    axiosWrap({
+        code:0,
+        url:'https://www.muyouche.com/action2/HomePageInfo.ashx',
+        method:'post',
+    }).then((res)=>{
+        console.log(res);
+    });
+
+
+    并发请求：
+    回调函数风格：
     axiosWrap({
         all:{
             apis:[//所有api配置
                 {
-                    url:'/action2/HomePageInfo.ashx',
+                    code:0,
+                    url:'https://www.muyouche.com/action2/HomePageInfo.ashx',
+                    method:'post',
                 },
                 {
-                    url:'/action2/CarBrand.ashx',
+                    code:0,
+                    url:'https://www.muyouche.com/action2/CarBrand.ashx',
+                    method:'post',
                 },
             ],
-            success(res1,res2){//都成功回调
-                console.log(res1,res2);
-            },
-            fail(statusArr,codeArr){//失败的状态和code数组
-                console.log(statusArr,codeArr);
+            success(resArr){//都成功回调
+                console.log(resArr);
             },
         },
     });
+
+    promise风格：
+    axiosWrap({
+        all:{
+            apis:[//所有api配置
+                {
+                    code:0,
+                    url:'https://www.muyouche.com/action2/HomePageInfo.ashx',
+                    method:'post',
+                },
+                {
+                    code:0,
+                    url:'https://www.muyouche.com/action2/CarBrand.ashx',
+                    method:'post',
+                },
+            ],
+        },
+    }).then((resArr)=>{
+        console.log(resArr);
+    });
 */
-function axiosWrap(option){
-    var option=option||{};
+function axiosWrap(config){
+    var config=config||{};
     var hostname=window.location.hostname;
-    var all=option.all;
+    var all=config.all;
+    var errorPromise={
+        then:function(){
+            console.error('这是一个无效的then函数，如果要使用promise方式，不要在config对象里配置success、error、finally函数');
+            return this;
+        },
+        catch:function(){
+            console.error('这是一个无效的catch函数，如果要使用promise方式，不要在config对象里配置success、error、finally函数');
+            return this;
+        },
+        finally:function(){
+            console.error('这是一个无效的finally函数，如果要使用promise方式，不要在config对象里配置success、error、finally函数');
+            return this;
+        },
+    };
+
+    config.code=config.code||config.code==0?config.code:200;
 
     function changeLoading(bool){
         try{
@@ -1956,62 +2098,91 @@ function axiosWrap(option){
 
     changeRefresh(false);
 
-    function createAxios(option){
-        var url=(hostname=='localhost'||hostname=='127.0.0.1'||hostname=='172.16.21.92')?(option.url?option.url:'/api'):'/';
-        var method=option.method?option.method.toLowerCase():'';
+    function createAxios(config){
+        var url=(hostname=='localhost'||hostname=='127.0.0.1'||hostname=='172.16.21.92')?(config.url?config.url:'/api'):'/';
+        var method=config.method?config.method.toLowerCase():'';
         var paramsOrData=method=='get'?'params':'data';
-        var config={
+        var configResult={
             url:url,
             method:method,
-            [paramsOrData]:option.params,
-            headers:option.headers||{},
-            timeout:option.timeout||5000,
-            responseType:option.responseType||'json', //默认值是json，可选项 'arraybuffer', 'blob', 'document', 'json', 'text', 'stream'
+            [paramsOrData]:config.params,
+            headers:config.headers||{},
+            timeout:config.timeout||20000,
+            responseType:config.responseType||'json', //默认值是json，可选项 'arraybuffer', 'blob', 'document', 'json', 'text', 'stream'
             onUploadProgress:function(ev){
-                option.upFn&&option.upFn(ev);
+                config.upFn&&config.upFn(ev);
             },
             onDownloadProgress:function(ev){
-                option.downFn&&option.downFn(ev);
+                config.downFn&&config.downFn(ev);
             },
-        }
-        var axiosFn=axios(config);
+        };
+        var axiosFn=axios(configResult);
 
-        if(option.success||option.error||option.finally){
-            !option.noMask&&changeLoading(true);
-
+        function axiosResultFn(resolve,reject){
             axiosFn.then(function(res){
                 var data=res.data;
 
                 if(res.status==200){
                     changeLoading(false);
-                    option.finally&&option.finally(data);
+                    config.finally&&config.finally(data);
 
-                    if(data.code==200){
-                        option.success&&option.success(data);
+                    if(data.code==config.code){
+                        if(resolve&&(Type(resolve)=='function')){
+                            return resolve(data);
+                        }else{
+                            config.success&&config.success(data);
+                        }
                     }else{
-                        if(!option.noHint){
+                        if(!config.noHint){
                             if(data.msg){
                                 alerts(data.msg);
                             }else{
                                 alerts('请求代码错误');
                             }
                         }
+                        if(reject&&(Type(reject)=='function')){
+                            return reject(data);
+                        }
                     }
                 }else{
                     alerts('网络异常'+res.status);
                     changeRefresh(true,res.status);
-                    option.error&&option.error(res);
+                    if(reject&&(Type(reject)=='function')){
+                        return reject(res);
+                    }else{
+                        config.error&&config.error(res);
+                    }
                 }
             }).catch(function(error){
                 console.log(error);
                 if(error.response){
                     alerts('网络异常');
                     changeRefresh(true,error.response.status);
-                    option.error&&option.error(error.response);
+                    if(reject&&(Type(reject)=='function')){
+                        return reject(error.response)
+                    }else{
+                        config.error&&config.error(error.response);
+                    }
+                }else if(error.code=='ECONNABORTED'){
+                    alerts('请求超时');
+                    changeRefresh(true,'请求超时');
+                    if(reject&&(Type(reject)=='function')){
+                        return reject(error);
+                    }else{
+                        config.error&&config.error(error);
+                    }
                 }
             });
+        };
+
+        !config.noMask&&changeLoading(true);
+        if(config.success||config.error||config.finally){
+            axiosResultFn();
+            return errorPromise;
         }else{
-            return axiosFn;
+            return new Promise(function(resolve,reject){
+                axiosResultFn(resolve,reject);
+            });
         }
     };
 
@@ -2024,64 +2195,26 @@ function axiosWrap(option){
             }
         }
 
-        !option.noMask&&changeLoading(true);
-
-        axios.all(apisArr).then(axios.spread(function(){
-            if(arguments&&arguments.length){
-                var resArr=Object.entries(arguments);
-                var dataArr=[];
-                var statusArr=[];
-                var codeArr=[];
-                var statusFail=[];
-                var codeFail=[];
-
-                resArr=resArr.map(function(item,index){
-                    return item[1];
-                });
-                dataArr=resArr.map(function(item,index){
-                    return item.data;
-                });
-                statusArr=resArr.map(function(item,index){
-                    return item.status;
-                });
-                codeArr=dataArr.map(function(item,index){
-                    return item.code;
-                });
-                statusFail=statusArr.filter(function(item,index){
-                    return item!=200;
-                });
-                codeFail=codeArr.filter(function(item,index){
-                    return item!=200;
-                });
-
-                all.fail&&all.fail(statusFail,codeFail);
-                if(statusFail&&statusFail.length==0){
-                    changeLoading(false);
-                    all.finally&&all.finally.apply(null,dataArr);
-
-                    if(codeFail&&codeFail.length==0){
-                        all.success&&all.success.apply(null,dataArr);
-                    }else{
-                        if(!all.noHint){
-                            alerts('请求代码错误');
-                        }
-                    }
+        function axiosAllResultFn(resolve,reject){
+            Promise.all(apisArr).then(function(){
+                if(resolve&&(Type(resolve)=='function')){
+                    return resolve(arguments[0]);
                 }else{
-                    alerts('网络异常');
-                    changeRefresh(true,statusFail.join(','));
-                    all.error&&all.error.apply(null,dataArr);
+                    all.success&&all.success(arguments[0]);
                 }
-            }
-        })).catch(function(error){
-            console.log(error);
-            if(error.response){
-                alerts('网络异常');
-                changeRefresh(true,error.response.status);
-                all.error&&all.error(error.response);
-            }
-        });
+            });
+        };
+
+        if(all.success||all.error||all.finally){
+            axiosAllResultFn();
+            return errorPromise;
+        }else{
+            return new Promise(function(resolve,reject){
+                axiosAllResultFn(resolve,reject);
+            });
+        }
     }else{
-        return createAxios(option);
+        return createAxios(config);
     }
 };
 
@@ -2482,17 +2615,88 @@ function decodeURIBase64Des(obj,key,iv){
 //最小1rem=100px(宽度为375px屏幕下),3.75rem=100%;
 //根据375屏幕下换算来布局
 //小于375屏幕根节点字体大小与375屏幕保持一致，注意宽度的溢出
-function htmlFontSize(){
+function htmlFontSize(getFontSize){
     function change(){
-        var fontSize=document.documentElement.clientWidth/3.75;
+        var oHtml=document.documentElement;
+        var fontSize=oHtml.clientWidth/3.75;
 
         if(fontSize<100)fontSize=100;
         if(fontSize>208)fontSize=208;
-        document.documentElement.style.fontSize=fontSize+'px';
+        if(!getFontSize){
+            oHtml.style.fontSize=fontSize+'px';
+        }else{
+            return fontSize;
+        }
     };
-    change();
-    window.onresize=change;
-    return fontSize;
+
+    if(!getFontSize){
+        change();
+        window.onresize=change;
+    }else{
+        return change();
+    }
+};
+
+//根据屏幕大小设置根节点字体大小
+//getFontSize（是否返回根节点fontSize大小）
+//basic（基准值）
+//maxScale（最大缩放比例）
+/*
+    最好结合postcss-pxtorem插件自动转换px为rem
+
+    安装：
+    npm i postcss-pxtorem -D
+
+    修改根目录 .postcssrc.js 文件：
+    注意：rootValue和basic（基准值）保持一致
+    "postcss-pxtorem": {
+        "rootValue": 100,
+        "minPixelValue": 2, //如px小于这个值，就不会转换了
+        "propList": ["*"], // 如需开启pxToRem模式，请在数组中加入"*"
+        "selectorBlackList": [] //如需把css选择器加入黑名单，请在数组中加入对应的前缀，比如"mint-"
+    }
+*/
+function htmlFontSize1(getFontSize,basic,maxScale){
+    var getFontSize=getFontSize||false;
+    var basic=basic||100;
+    var maxScale=maxScale||1.5;
+
+    function change(){
+        var oHtml=document.documentElement;
+        var iWidth=oHtml.clientWidth;
+        var iScale=Math.min(iWidth/375,maxScale);
+        var fontSize=basic*iScale;
+
+        if(!getFontSize){
+            oHtml.style.fontSize=fontSize+'px';
+        }else{
+            return fontSize;
+        }
+    };
+
+    if(!getFontSize){
+        change();
+        window.onresize=change;
+    }else{
+        return change();
+    }
+};
+
+//转换单位为rem
+//需要引入import postcssrc from 'root/.postcssrc';
+function unit(num,basic){
+    var length=0;
+
+    if(postcssrc){
+        length=postcssrc.plugins['postcss-pxtorem'].propList.length;
+    }
+
+    if(num==0)return 0;
+    if(length==0)return num+'px';
+    var basic=basic||100;
+    var value=num/basic;
+
+    return (value<0.01?0.01:value)+'rem';
 };
 
 //提示框插件
@@ -2610,7 +2814,7 @@ var regJson={
     },
     identity:{
         name:'身份证号码',
-        reg:/^[1-9]\d{5}[1-9]\d{3}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])\d{3}([0-9]|X|x)$/,
+        reg:/^[1-8]\d{5}[1-9]\d{3}(0[1-9]|1[0-2])(0[1-9]|[1-2]\d|3[0-1])\d{3}[\dxX]$/,
     },
     bankCard:{
         name:'银行卡号',
@@ -5791,6 +5995,27 @@ function foreach(arr,fn){
     }
 };
 
+//十六进制颜色转rgb颜色
+//hex为字符串
+function HEXToRGB(hex){
+    var hex=hex.replace('#','0x');
+    var hex256='0xff';
+    var r=hex>>16;
+    var g=hex>>8&hex256;
+    var b=hex&hex256;
+
+    return 'rgb('+r+','+g+','+b+')';
+};
+
+//rgb颜色转十六进制颜色
+//rgb为字符串
+function RGBToHEX(rgb){
+    var rgbArr=rgb.split(/[^\d]+/);1
+    var color=rgbArr[1]<<16|rgbArr[2]<<8|rgbArr[3];
+
+    return '#'+color.toString(16);
+};
+
 //布局转换
 function layoutChange(obj){
     for(var i=0;i<obj.length;i++){
@@ -6565,11 +6790,32 @@ function clone(obj){
     return o;
 };
 
-//二进制与十进制的转换（toString已实现各种进制转换，这里只是说明思路）
+//进制转换器
+//value（要转换的值，字符串类型）
+//current（要转换的值的当前进制）
+//target（要转的值的目标进制）
+function sysConvert(value,current,target){
+    var value=+value;
+
+    if(!value&&value!==0)return value;
+
+    if(current==10){
+        value=value.toString(target);
+    }else if(target==10){
+        value=parseInt(value,current);
+    }else{
+        value=parseInt(value,current).toString(target);
+    }
+
+    return value;
+};
+
+//二进制与十进制的转换（toString和parseInt已实现各种进制转换，这里只是说明思路）
 //value（要转换的值）
-//bool（false：二进制转十进制，true：十进制转二进制（一定要是字符串，不然会变成浮点数））
+//bool（false：十进制转二进制，true：二进制转十进制
 function changeSystem(value,bool){
     var result=!bool?'':0;
+    var value=!bool?+value:value+'';
 
     if(!bool){
         function recursion(value){
@@ -7103,6 +7349,254 @@ function reactSelect(This,key,ev){
     This.setState({
         [key]:Type(This.state[key])=='array'?optionArr:value,
     });
+};
+
+/*
+    10.1、严格模式使用规则
+*/
+
+//严格模式使用规则
+/*
+    总结：
+    一：禁用报错
+    1、八进制表示法
+    2、eval,arguments,es6新增的关键字做变量
+    3、with语句,函数下callee/caller函数
+
+    二：删除报错
+    1、系统内置属性
+    2、var 声明的变量
+    3、不可删除的属性
+
+    三：语法报错
+    1、对象有重名属性，函数有重名参数
+    2、对一个对象的只读属性进行赋值
+    3、对禁止扩展的对象添加新属性
+    4、变量必须声明，函数写在if或for内，外部调用
+
+    四：差异
+    1、arguments严格定义为参数，不再与形参绑定
+    2、call/apply/bind的第一个参数不包装为对象，第一个参数为null/undefined时，this也为null/undefined
+
+    查看列子：
+    var examples=useStrictRule();
+
+    examples['1'].example();//执行对应例子，去掉//'use strict';的注释，切换到严格模式对比两种模式的差异
+*/
+function useStrictRule(){
+    var rule={
+        'a-Use':'严格模式的使用很简单，只有在代码首部加入字符串  "use strict"。必须在首部即首部指其前面没有任何有效js代码除注释，否则无效',
+        'b-notes':{
+            1:{
+                description:'不使用var声明变量严格模式中将不通过，在循环中如果没有声明变量在非严格模式中很危险，i 会不小心溢出成为全局变量，但在严格模式中会报错，严格模式中变量必须显示声明(var/let/const)',
+                example:function(){
+                    //'use strict';
+
+                    a=1;
+                    console.log(a);
+                },
+            },
+            2:{
+                description:'JS中作用域有两种，全局作用域和函数作用域。严格模式带来了第三种作用域：eval作用域，则任何使用"eval"的操作都会被禁止,(eval() 函数可计算某个字符串，并执行其中的的 JavaScript 代码,不常用容易报错)，在严格模式下，arguments和eval是关键字，不能被修改，不能做变量处理',
+                example:function(){
+                    //'use strict';
+
+                    var arguments;
+                    var eval;
+                    console.log(arguments,eval);
+                },
+            },
+            3:{
+                description:'with()被禁用:with 语句用于设置代码在特定对象中的作用域。with 语句是运行缓慢的代码块，尤其是在已设置了属性值时。大多数情况下，如果可能，最好避免使用它。',
+                example:function(){
+                    //'use strict';
+
+                    var json={a:1,b:2};
+
+                    with(json){
+                        a=2;
+                        b=3;
+                    }
+                    console.log(json);
+                },
+            },
+            4:{
+                description:'callee/caller 被禁用',
+                example:function(){
+                    //'use strict';
+
+                    function foo(num,result){
+                        if(num>10)return result;
+                        var result=result||0;
+
+                        result+=num;
+                        num++;
+                        return arguments.callee(num,result);
+                    };
+                    console.log(foo(1));
+                },
+            },
+            5:{
+                description:'对禁止扩展的对象添加新属性会报错：Object.seal(obj)或者Object.preventExtensions(obj)；然后对obj增加属性则会报错',
+                example:function(){
+                    //'use strict';
+
+                    var obj={};
+
+                    Object.preventExtensions(obj);
+                    obj.a=1;
+                    console.log(obj);
+                },
+            },
+            6:{
+                description:'删除系统内置的属性会报错',
+                example:function(){
+                    //'use strict';
+
+                    delete window.document;
+                    console.log(document);
+                },
+            },
+            7:{
+                description:'delete使用var声明的变量或挂在window上的变量报错',
+                example:function(){
+                    //'use strict';
+
+                    var a=1;
+
+                    delete a;
+                    console.log(a);
+                },
+            },
+            8:{
+                description:'delete不可删除属性(isSealed或isFrozen)的对象时报错(Object.isSealed() 方法判断一个对象是否被密封。Object.isFrozen()方法判断一个对象是否被冻结。)',
+                example:function(){
+                    //'use strict';
+
+                    var obj={a:1};
+
+                    Object.freeze(obj);
+                    delete obj.a;
+                    console.log(obj);
+                },
+            },
+            9:{
+                description:'对一个对象的只读属性进行赋值将报错,（Object.defineProperty(obj, "a", {value: 1, writable: false})然后对obj属性修改则会报错）',
+                example:function(){
+                    //'use strict';
+
+                    var obj={a:1};
+
+                    Object.defineProperty(obj,'a',{
+                        value:2,
+                        writable:false,
+                    });
+                    obj.a=3;
+                    console.log(obj);
+                },
+            },
+            10:{
+                description:'对象有重名的属性将报错',
+                example:function(){
+                    //'use strict';
+
+                    var obj={a:1,a:2};
+
+                    console.log(obj);
+                },
+            },
+            11:{
+                description:'函数有重名的参数将报错，在严格模式下，函数的形参也不可以同名',
+                example:function(){
+                    //'use strict';
+
+                    function foo(a,a){
+                        console.log(a);
+                    };
+                    foo(1,2);
+                },
+            },
+            12:{
+                description:'八进制表示法被禁用，八进制最大为3位数',
+                example:function(){
+                    //'use strict';
+
+                    var number=070;
+
+                    number=number .toString();
+                    console.log(number);
+                },
+            },
+            13:{
+                description:'arguments严格定义为参数，不再与形参绑定',
+                example:function(){
+                    //'use strict';
+
+                    function foo(a,b){
+                        arguments[1]=3
+                        console.log(arguments);
+                        console.log(b);
+                    };
+                    foo(1,2);
+                },
+            },
+            14:{
+                description:'一般函数声明都在最顶层，ES5前的JS宽松，你可以写在if或for内（强烈鄙视这种写法）。当然Firefox的解析方式与其他浏览器不同，而在严格模式中这些写法将直接报错',
+                example:function(){
+                    //'use strict';
+
+                    if(1){
+                        function foo(){
+                            console.log(111);
+                        };
+                    }
+                    foo();
+                },
+            },
+            15:{
+                description:'ES6里新增的关键字不能当做变量标示符使用，如implements, interface, let, package, private, protected, public, static, yield',
+                example:function(){
+                    //'use strict';
+
+                    var implements;
+                    var interface;
+                    var let;
+                    var package;
+                    var private;
+                    var protected;
+                    var public;
+                    var static;
+                    var yield;
+                },
+            },
+            16:{
+                description:'call/apply/bind的第一个参数直接传入不包装为对象',
+                example:function(){
+                    //'use strict';
+
+                    function foo(){
+                        console.log(this);
+                    };
+                    foo.call(1);
+                },
+            },
+            17:{
+                description:'call/apply/bind的第一个参数为null/undefined时，this为null/undefined',
+                example:function(){
+                    //'use strict';
+
+                    function foo(){
+                        console.log(this);
+                    };
+                    foo.call(null);
+                    foo.call(undefined);
+                },
+            },
+        },
+    };
+
+    console.log(rule);
+    return rule['b-notes'];
 };
 
 
