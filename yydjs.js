@@ -658,11 +658,14 @@ function drag(obj,lMin,lMax,tMin,tMax,sFn,mFn,endFn){
     1.3、cookie与storage
 */
 
+//cookie操作
 var cookie={
-    set:function(key,value,mesc){//设置cookie
+    set:function(key,value,sec){
+        var sec=sec||60*60*24*30;
         var oDate=new Date();
 
-        oDate.setSeconds(oDate.getSeconds()+(mesc||60*60*24*30));//不传过期秒数默认30天过期
+        oDate.setSeconds(oDate.getSeconds()+sec);
+        oDate=oDate.toGMTString();
         document.cookie=key+'='+encodeURIComponent(value)+';expires='+oDate;
     },
     get:function(key){//获取cookie
@@ -677,16 +680,18 @@ var cookie={
             str+='"}';
             str=JSON.parse(str);
         }catch(e){}
-        return decodeURIComponent(str[key]);
+        return str[key]?decodeURIComponent(str[key]):str[key];
     },
     remove:function(key){//删除cookie
         var oDate=new Date();
 
         oDate.setDate(oDate.getDate()-1);
-        document.cookie=key+'='+''+';expires='+oDate.toGMTString();
+        oDate=oDate.toGMTString();
+        document.cookie=key+'='+''+';expires='+oDate;
     },
 };
 
+//创建Store对象
 var Store=function(){
     this.name='Store';
 };
@@ -740,10 +745,12 @@ Store.prototype={
     },
 };
 
+//localStorage操作
 var lStore=new Store().init({
     'type':window.localStorage,
 });
 
+//sessionStorage操作
 var sStore=new Store().init({
     'type':window.sessionStorage,
 });
@@ -1454,6 +1461,8 @@ function strToJson1(str){
 //href(要定制的href)
 function jsonToStr(json,arr,href){
     var str='';
+    var json=json||{};
+    var arr=arr||[];
     var href=href||(window.location.origin+window.location.pathname);
 
     for(var i=0;i<arr.length;i++){
@@ -3593,10 +3602,10 @@ function htmlTemplate(json){
 //              transform:'rotateX(0deg)',
 //          },
 //      };
-//mesc(动画执行的总时间，单位毫秒)
+//msec(动画执行的总时间，单位毫秒)
 //type(动画的运动类型)
-function keyframes(obj,json,mesc,type){
-    var mesc=mesc||1000;
+function keyframes(obj,json,msec,type){
+    var msec=msec||1000;
     var type=type||'linear';
 
     for(var attr in json){
@@ -3604,12 +3613,12 @@ function keyframes(obj,json,mesc,type){
             setTimeout(function(){
                 var json1=json[attr];
 
-                obj.style.transition='all '+attr*mesc+'ms '+type;
-                obj.style.WebkitTransition='all '+attr*mesc+'ms '+type;
+                obj.style.transition='all '+attr*msec+'ms '+type;
+                obj.style.WebkitTransition='all '+attr*msec+'ms '+type;
                 for(var attr1 in json1){
                     obj.style[attr1]=json1[attr1];
                 }
-            },attr*mesc);
+            },attr*msec);
         })(attr,json);
     }
 };
@@ -5812,7 +5821,8 @@ function getOpenId(url,endFn){
 function WXFZ(json,endFn){
     function onBridgeReady(){
        WeixinJSBridge.invoke(
-           'getBrandWCPayRequest',{
+           'getBrandWCPayRequest',
+           {
                "appId":json.appId,                  //公众号名称，由商户传入
                "timeStamp":json.timeStamp,          //时间戳，自1970年以来的秒数
                "nonceStr":json.nonceStr,            //随机串
@@ -5967,6 +5977,65 @@ function wxShare(json){
             console.log('错误',res);
         });
     });
+};
+
+//获取微信code（vue版）
+var WXCode={
+    //parent（vue对象）
+    //appid（微信公众号的appid）
+    //userinfo（是否是用户授权模式）
+    get:function(parent,appid,componentAppid,directory,userinfo){
+        if(!isWeixin())return;
+        if(parent){
+            var wxCode=cookie.get('wxCode');
+            var path=parent.$router.currentRoute.path;
+            var query=parent.$router.currentRoute.query;
+            var appid=appid||'wxd9b3d678e7ae9181';
+            var componentAppid=componentAppid?'&component_appid='+componentAppid:'';
+            var directory=directory||'';
+            var url=window.location.origin+directory+'/index.html'+'?query=';
+            var search=window.location.search;
+
+            query.path=path;
+            url+=JSON.stringify(query);
+            if(!wxCode){
+                //获得微信基本权限的code（无需授权）
+                var snsapi_base='https://open.weixin.qq.com/connect/oauth2/authorize?appid='+appid+'&redirect_uri='+url+'&response_type=code&scope=snsapi_base'+componentAppid+'#wechat_redirect';
+                //获得微信最高权限的code（需要授权）
+                var snsapi_userinfo='https://open.weixin.qq.com/connect/oauth2/authorize?appid='+appid+'&redirect_uri='+url+'&response_type=code&scope=snsapi_userinfo'+componentAppid+'&state=STATE#wechat_redirect';
+                var accredit=!userinfo?snsapi_base:snsapi_userinfo;
+
+                window.location.replace(accredit);
+            }else{
+                return wxCode;
+            }
+        }
+    },
+    //parent（vue对象）
+    //需放在router.afterEach里进行监听
+    listen:function(parent){
+        if(!isWeixin())return;
+        if(parent){
+            var wxCode=cookie.get('wxCode');
+            var query=decodeURIComponent(getSearch('query'));
+            var code=getSearch('code');
+            query=query?JSON.parse(query):query;
+            query=query||{};
+            var path=query.path;
+
+            query.code=code;
+            if(!wxCode&&path){
+                delete query.path;
+
+                window.history.replaceState(null,null,'index.html');
+                cookie.set('wxCode',code,300);
+                parent.$router.replace({
+                    path:path,
+                    query:query,
+                });
+            }
+        }
+    },
 };
 
 /*
@@ -6387,8 +6456,8 @@ function setPromise(fn,ag1,ag2){
 //disX(钟摆运动X轴的最大位置)
 //disY(钟摆运动Y轴的最大位置)
 //sX（钟摆运动X轴的加速度）
-//mesc(钟摆运动的定时器频率)
-function pendulum(obj,disX,disY,sX,mesc){
+//msec(钟摆运动的定时器频率)
+function pendulum(obj,disX,disY,sX,msec){
     var speedX=0;
     var speedY=0;
     var disX=disX||300;
@@ -6411,7 +6480,7 @@ function pendulum(obj,disX,disY,sX,mesc){
             console.log(2);
         }
         aDiv.style.top=y+speedY+'px';
-    },mesc||50);
+    },msec||50);
 };
 
 //添加删除遮罩层
