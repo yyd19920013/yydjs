@@ -1059,6 +1059,26 @@ function getAge1(date,real){
     return age;
 };
 
+//根据身份证号码获取性别和生日
+function getSexAndDob(identity){
+    var sexAndDob={};
+
+    if(regJson.identity.reg.test(identity)){
+        var sex=identity.substring(identity.length-2,identity.length-1);
+        var dob=identity.substring(6,14);
+
+        sex=sex&1==1?'1':'2';
+        dob=`${dob.substring(0,4)}-${dob.substring(4,6)}-${dob.substring(6)}`;
+
+        sexAndDob={
+            sex:sex,
+            dob:dob,
+        };
+    }
+
+    return sexAndDob;
+};
+
 //日期格式化函数
 //oDate（时间戳或字符串日期都支持）
 //fmt（格式匹配）
@@ -1658,36 +1678,47 @@ function getFullscreenAPI(obj){
 };
 
 //浏览器通知
-//Notification.permission属性，用于读取用户给予的权限，它是一个只读属性，它有三种状态。
-//default：用户还没有做出任何许可，因此不会弹出通知。
-//granted：用户明确同意接收通知。
-//denied：用户明确拒绝接收通知。
+/*
+    Notification.permission属性，用于读取用户给予的权限，它是一个只读属性，它有三种状态。
+    default：用户还没有做出任何许可，因此不会弹出通知。
+    granted：用户明确同意接收通知。
+    denied：用户明确拒绝接收通知。
 
-//json(通知的配置项)
-//title：通知标题
-//body：通知内容
-//tag：通知的ID，格式为字符串。一组相同tag的通知，不会同时显示，只会在用户关闭前一个通知后，在原位置显示
-//icon：图表的URL，用来显示在通知上
-//dir：文字方向，可能的值为auto、ltr（从左到右）和rtl（从右到左），一般是继承浏览器的设置
-//lang：使用的语种，比如en-US、zh-CN
+    config(通知的配置项)
+    title：通知标题
+    body：通知内容
+    tag：通知的ID，格式为字符串。一组相同tag的通知，不会同时显示，只会在用户关闭前一个通知后，在原位置显示
+    icon：图表的URL，用来显示在通知上
+    dir：文字方向，可能的值为auto、ltr（从左到右）和rtl（从右到左），一般是继承浏览器的设置
+    lang：使用的语种，比如en-US、zh-CN
 
-//json1(通知的事件)
-//show：通知显示给用户时触发
-//click：用户点击通知时触发
-//close：用户关闭通知时触发
-//error：通知出错时触发（大多数发生在通知无法正确显示时）
-function notification(json,json1){
-    json.title=json.title||'无标题';
-    json.body=json.body||'无内容';
+    eventConfig(通知的事件配置项)
+    show：通知显示给用户时触发
+    click：用户点击通知时触发
+    close：用户关闭通知时触发
+    error：通知出错时触发（大多数发生在通知无法正确显示时）
+*/
+function notification(config,eventConfig){
+    var config=config||{};
+    var eventConfig=eventConfig||{};
 
-    if(window.Notification&&Notification.permission!=="denied"){
-        Notification.requestPermission(function(status){
-            var n=new Notification(json.title,json);
+    config.title=config.title||'无标题';
+    config.body=config.body||'无内容';
 
-            for(var attr in json1){
-                n[attr]=json1[attr];
-            }
-        });
+    if(window.Notification){
+        if(Notification.permission!='denied'){
+            Notification.requestPermission(function(status){
+                var oN=new Notification(config.title,config);
+
+                for(var attr in eventConfig){
+                    oN[attr]=eventConfig[attr];
+                }
+            });
+        }else{
+            console.log('用户拒绝显示通知');
+        }
+    }else{
+        console.log('你的浏览器不支持通知');
     }
 };
 
@@ -2512,20 +2543,13 @@ function networkHandle(onlineFn,offlineFn){
 //whiteList（允许调试的域名列表，例子如下：）
 //openMoblieDebug(['ih.dev.aijk.net','ih2.test.aijk.net']);
 function openMoblieDebug(whiteList){
+    var whiteList=whiteList||[];
     var hostname=window.location.hostname;
+    var open=hostname=='localhost'||hostname=='127.0.0.1'||hostname=='172.16.21.92'||~whiteList.indexOf(hostname);
     var count=0;
-    var onOff=false;
-
-    for(var i=0;i<whiteList.length;i++){
-        if(hostname==whiteList[i]){
-            onOff=true;
-            break;
-        }
-    }
 
     function openFn(){
         var oErudaScript=document.getElementById('//cdn.jsdelivr.net/npm/eruda');
-        var open=(hostname=='localhost'||hostname=='127.0.0.1'||hostname=='172.16.21.92'||onOff);
 
         if(!oErudaScript&&open){
             var oScript=document.createElement('script');
@@ -2556,8 +2580,10 @@ function openMoblieDebug(whiteList){
         }
     };
 
-    unbind(document,'click',openJudgeFn);
-    bind(document,'click',openJudgeFn);
+    if(open){
+        unbind(document,'click',openJudgeFn);
+        bind(document,'click',openJudgeFn);
+    }
 };
 
 //json克隆副本
