@@ -6719,7 +6719,7 @@ function removeEnd(obj){
 
 //冒泡排序法（万次排序200ms）
 //fn为对比值大小的函数，function(a,b){return b-a;}
-//算法描述：数组往后坐对比，前一个值如果小于后一个值，则交换位置（升序）
+//算法描述：数组往后作对比，前一个值如果小于后一个值，则交换位置（升序）
 function bubbleSort(arr,fn){
     for(var i=0;i<arr.length;i++){
         for(var j=0;j<arr.length-i-1;j++){
