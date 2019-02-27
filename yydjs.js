@@ -1527,6 +1527,12 @@ var routerMap={
 
 //原生嵌入webview的刷新方法
 function webviewRefresh(){
+    //如果有定义window下的webviewRefresh，则执行window下的webviewRefresh
+    if(window.webviewRefresh){
+        window.webviewRefresh();
+        return;
+    }
+
     var rPath='';
     var pathname=window.location.pathname;
     var search='';
@@ -3241,16 +3247,18 @@ function lazyLoading(imgArr,srcName,dis){
 //利用闭包实现函数防抖
 //fn（用执行的函数）
 //msec（执行间隔，毫秒）
-//使用示例（mousemove300ms后执行一次count）
-//var iCount=1;
-//
-//var count=antiShake(function(){
-//  console.log(iCount++);
-//});
-//
-//document.onmousemove=function(){
-//  count();
-//};
+/*
+    使用示例（mousemove300ms后执行一次count）
+    var iCount=1;
+
+    var count=antiShake(function(){
+     console.log(iCount++);
+    });
+
+    document.onmousemove=function(){
+     count();
+    };
+*/
 function antiShake(fn,msec){
     var timer=null;
 
@@ -3268,16 +3276,18 @@ function antiShake(fn,msec){
 //利用闭包实现函数节流
 //fn（用执行的函数）
 //msec（执行间隔，毫秒）
-//使用示例（mousemove每300ms执行一次count）
-//var iCount=1;
-//
-//var count=throttle(function(){
-//  console.log(iCount++);
-//});
-//
-//document.onmousemove=function(){
-//  count();
-//};
+/*
+    使用示例（mousemove每300ms执行一次count）
+    var iCount=1;
+
+    var count=throttle(function(){
+     console.log(iCount++);
+    });
+
+    document.onmousemove=function(){
+     count();
+    };
+*/
 function throttle(fn,msec){
     var timer=null;
     var first=true;
@@ -6293,8 +6303,9 @@ function router(){
 };
 
 //自己实现双向数据绑定
-//var $yydModel=yydModel();//数据映射对象返回在该函数上
 /*
+    var $yydModel=yydModel();//数据映射对象返回在该函数上
+
     $yydModel.set('aaa','双向数据绑定');
 */
 function yydModel(){
@@ -6345,7 +6356,8 @@ function yydModel(){
                 childNodes[i].data=childNodes[i].yydModelStr.join('');
             }
 
-            setMatchTextNode(childNodes[i].childNodes,key,newVal);
+            setMatchTextNode(childNodes[i].childNodes);
+            setModelData(childNodes[i].childNodes,key,newVal);
         }
     };
 
