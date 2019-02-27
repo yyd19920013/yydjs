@@ -6356,7 +6356,6 @@ function yydModel(){
                 childNodes[i].data=childNodes[i].yydModelStr.join('');
             }
 
-            setMatchTextNode(childNodes[i].childNodes);
             setModelData(childNodes[i].childNodes,key,newVal);
         }
     };
