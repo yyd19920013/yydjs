@@ -6307,12 +6307,18 @@ function router(){
 /*
     var $yydModel=yydModel();//数据映射对象返回在该函数上
 
+    $yydModel.watch(function(newValue,oldValue){//必须写在set前面才能监听set的变化
+        console.log(newValue,oldValue);
+    });
     $yydModel.set('aaa','双向数据绑定');
+    $yydModel.set('b','厉害了');
 */
 function yydModel(){
     var oAllModel=QSA('input[yyd-model],textarea[yyd-model]');
-    var reg=/{{(.)+}}/g;
-    var reg1=/{{|\s/g;
+    var reg=/{{[^(}})]+}}/g;
+    var reg1=/\s+/g;
+    var reg2=/{{|}}/g;
+    var matchArr=[];
     var obj={};
     var objMap={};
 
@@ -6320,12 +6326,23 @@ function yydModel(){
         if(!childNodes||childNodes.length==0)return;
 
         for(var i=0;i<childNodes.length;i++){
-            if(childNodes[i].nodeType==3&&childNodes[i].data&&childNodes[i].data.match(reg)){
-                var result=childNodes[i].data.match(reg).join('').replace(reg1,'');
+            var matchResult=childNodes[i].data&&childNodes[i].data.match(reg);
 
-                result=result.split('}}');
+            if(childNodes[i].nodeType==3&&childNodes[i].data&&matchResult){
+                var result=childNodes[i].data.replace(reg1,'').split(reg2);
+
+                for(var j=0;j<matchResult.length;j++){
+                    var str=matchResult[i].replace(reg2,'');
+
+                    matchResult[i]=str;
+                    if(!~matchArr.indexOf(str)){
+                        matchArr.push(str);
+                    }
+                }
+
                 childNodes[i].yydModel=result;
                 childNodes[i].yydModelStr=[];
+                childNodes[i].rawData=childNodes[i].data;
                 childNodes[i].data='';
             }
 
@@ -6338,27 +6355,51 @@ function yydModel(){
         if(!childNodes||childNodes.length==0)return;
 
         for(var i=0;i<childNodes.length;i++){
-            if(childNodes[i].yydModel&&childNodes[i].yydModel.indexOf(key)!=-1){
+            if(childNodes[i].yydModel){
                 var arr=[].concat(childNodes[i].yydModel);
-                var indexArr=[];
+                var yydModelStr=[].concat(arr);
+                var oldStr=[].concat(childNodes[i].yydModelStr);
 
                 for(var j=0;j<arr.length;j++){
                     var index=arr.indexOf(key);
+                    var index1=~matchArr.indexOf(arr[j])?j:-1;
 
                     if(index!=-1){
-                        indexArr.push(index);
+                        yydModelStr[index]=newVal;
                         arr[index]='';
+                    }else if(index1!=-1){
+                        yydModelStr[index1]=oldStr[index1]?oldStr[index1]:'';
+                        arr[index1]='';
                     }
                 }
 
-                for(var j=0;j<indexArr.length;j++){
-                    childNodes[i].yydModelStr[indexArr[j]]=newVal;
-                }
-                childNodes[i].data=childNodes[i].yydModelStr.join('');
+                childNodes[i].yydModelStr=yydModelStr;
+                childNodes[i].data=yydModelStr.join('');
             }
 
             setModelData(childNodes[i].childNodes,key,newVal);
         }
+    };
+
+    function definePropertyFn(obj,key){
+        Object.defineProperty(obj,key,{
+            set:function(newVal){
+                var allSelect=QSA('input[yyd-model='+key+'],textarea[yyd-model='+key+']');
+                var oldObjMap=copyJson(objMap);
+
+                for(var j=0;j<allSelect.length;j++){
+                    allSelect[j].value=newVal;
+                }
+
+                setModelData(document.body.childNodes,key,newVal);
+                objMap[key]=newVal;
+
+                customEvent.emit('yydModelDefinePropertySet',{
+                    newVal:copyJson(objMap),
+                    oldVal:oldObjMap,
+                });
+            }
+        });
     };
 
     for(var i=0;i<oAllModel.length;i++){
@@ -6368,18 +6409,7 @@ function yydModel(){
 
         (function(i,key){
             if(!objMap[key]){
-                Object.defineProperty(obj,key,{
-                    set:function(newVal){
-                        var allSelect=QSA('input[yyd-model='+key+'],textarea[yyd-model='+key+']');
-
-                        for(var j=0;j<allSelect.length;j++){
-                            allSelect[j].value=newVal;
-                        }
-
-                        setModelData(document.body.childNodes,key,newVal);
-                        objMap[key]=newVal;
-                    }
-                });
+                definePropertyFn(obj,key);
             }
         })(i,key);
 
@@ -6391,23 +6421,17 @@ function yydModel(){
         });
     }
 
-    objMap.set=function(key,value){
-        oAllModel=QSA('input[yyd-model],textarea[yyd-model]');
+    objMap.watch=function(endFn){
+        customEvent.on('yydModelDefinePropertySet',function(data){
+            var newVal=data.newVal;
+            var oldVal=data.oldVal;
 
-        Object.defineProperty(obj,key,{
-            set:function(newVal){
-                for(var i=0;i<oAllModel.length;i++){
-                    var allSelect=QSA('input[yyd-model='+key+'],textarea[yyd-model='+key+']');
-
-                    for(var j=0;j<allSelect.length;j++){
-                        allSelect[j].value=newVal;
-                    }
-                }
-
-                setModelData(document.body.childNodes,key,newVal);
-                objMap[key]=newVal;
-            }
+            endFn&&endFn(newVal,oldVal);
         });
+    };
+
+    objMap.set=function(key,value){
+        definePropertyFn(obj,key);
         obj[key]=value;
     };
 
