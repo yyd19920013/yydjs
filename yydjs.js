@@ -6115,10 +6115,11 @@ function HEXToRGB(hex){
 //rgb颜色转十六进制颜色
 //rgb为字符串
 function RGBToHEX(rgb){
-    var rgbArr=rgb.split(/[^\d]+/);1
-    var color=rgbArr[1]<<16|rgbArr[2]<<8|rgbArr[3];
+    var reg=/[^\d]+/;
+    var arr=rgb.split(reg);
+    var hex=arr[1]<<16|arr[2]<<8|arr[3];
 
-    return '#'+color.toString(16);
+    return '#'+hex.toString(16);
 };
 
 //布局转换
