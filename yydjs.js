@@ -7491,8 +7491,8 @@ function reactSelect(This,key,ev){
     总结：
     一：禁用报错
     1、八进制表示法
-    2、eval,arguments,es6新增的关键字做变量
-    3、with语句,函数下callee/caller函数
+    2、eval函数,arguments、es6新增的关键字做变量
+    3、with语句,函数下callee/caller
 
     二：删除报错
     1、系统内置属性
@@ -7501,9 +7501,8 @@ function reactSelect(This,key,ev){
 
     三：语法报错
     1、对象有重名属性，函数有重名参数
-    2、对一个对象的只读属性进行赋值
-    3、对禁止扩展的对象添加新属性
-    4、变量必须声明，函数写在if或for内，外部调用
+    2、对象的只读属性进行赋值，禁止扩展的对象添加新属性
+    3、变量必须声明，函数写在if或for内，外部调用
 
     四：差异
     1、arguments严格定义为参数，不再与形参绑定
