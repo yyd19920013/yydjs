@@ -399,15 +399,15 @@ function domLoad(fn){
         }
     });
     bind(document,'DOMContentLoaded',function(){
-        onOff&&fn('DOMContentLoaded');
+        onOff&&fn&&fn('DOMContentLoaded');
         onOff=false;
     });
     bind(document,'onreadystatechange',function(){
-        onOff&&fn('onreadystatechange');
+        onOff&&fn&&fn('onreadystatechange');
         onOff=false;
     });
     bind(window,'load',function(){
-        onOff&&fn('load');
+        onOff&&fn&&fn('load');
         onOff=false;
     });
 };
@@ -1853,6 +1853,7 @@ function getUserMedia(options){
     });
 */
 function ajaxWrap(config){
+    if(!window.navigator.onLine)return alerts('当前无网络！');
     var str='';
     var errorPromise={
         then:function(){
@@ -2095,6 +2096,7 @@ function ajaxWrap(config){
     });
 */
 function axiosWrap(config){
+    if(!window.navigator.onLine)return alerts('当前无网络！');
     var config=config||{};
     var hostname=window.location.hostname;
     var all=config.all;
