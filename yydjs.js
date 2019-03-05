@@ -2293,7 +2293,7 @@ function axiosWrap(config){
     var socMarket=new Socket();
 
     socMarket.init({
-        url:'wss://api2018cfd-dev.ga096.cn/app/websocket/',
+        url:'wss://api2018cfd-test.ga096.cn/app/websocket/',
         heartbeatJson:{
             CMD:'1000',
             token:'',
