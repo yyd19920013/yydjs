@@ -813,6 +813,7 @@ function Type1(obj){
 //定时器增强requestAnimationFrame与setInterval兼容
 function yydTimer(fn,msec){
     var id=null;
+    var clear=null;
     var lastT=null;
     var msec=msec||1000/60;
 
@@ -829,26 +830,26 @@ function yydTimer(fn,msec){
             }
             lastT=parseInt(time)%msec;
 
-            function clear(){
+            clear=function(){
                 cancelAnimationFrame(id);
             };
-            window.onhashchange=function(){
-                clear();
-            };
+
+            return id;
         };
-        id=requestAnimationFrame(animate);
+        id=animate(0);
     }else{
         id=setInterval(function(){
             fn&&fn(clear,id);
         },msec);
 
-        function clear(){
+        clear=function(){
             clearInterval(id);
         };
-        window.onhashchange=function(){
-            clear();
-        };
     }
+
+    window.onhashchange=function(){
+        clear();
+    };
 };
 
 //判断json是否有某个key，不管是否为空
@@ -1853,7 +1854,6 @@ function getUserMedia(options){
     });
 */
 function ajaxWrap(config){
-    if(!window.navigator.onLine)return alerts('当前无网络！');
     var str='';
     var errorPromise={
         then:function(){
@@ -2096,7 +2096,6 @@ function ajaxWrap(config){
     });
 */
 function axiosWrap(config){
-    if(!window.navigator.onLine)return alerts('当前无网络！');
     var config=config||{};
     var hostname=window.location.hostname;
     var all=config.all;
@@ -2343,6 +2342,7 @@ function axiosWrap(config){
 function Socket(){
     this.ws=null;
     this.dataJson={};
+    this.deleteDataJson={};
     this.fnJson={};
     this.options={};
 
@@ -2355,6 +2355,7 @@ function Socket(){
 
     this.first=true;
     this.onOff=true;
+    this.reset=false;
     this.keyArr=[];
 
     return this;
@@ -2388,10 +2389,13 @@ Socket.prototype={
 
             bind(This.ws,'close',function(res){
                 This.reconect();
+                This.reset=true;
+
             });
 
             bind(This.ws,'error',function(res){
                 This.reconect();
+                This.reset=true;
             });
         };
 
@@ -2407,6 +2411,21 @@ Socket.prototype={
 
         return this;
     },
+    onMessageFn:function(key,endFn,finallyFn){
+        return function(res){
+            var data=null;
+
+            try{
+                data=JSON.parse(res.data);
+                data.data=JSON.parse(data.data);
+            }catch(e){}
+
+            finallyFn&&finallyFn(data,res);
+            if(data.reqToken==key){
+                endFn&&endFn(data,res);
+            }
+        };
+    },
     heartbeat:function(){
         var This=this;
 
@@ -2416,10 +2435,10 @@ Socket.prototype={
 
             This.timer1=setTimeout(function(){
                 This.timer1=null;
-                This.options.heartbeatJson&&This.ws.send(JSON.stringify(This.options.heartbeatJson));
+                This.options.heartbeatJson&&This.ws&&This.ws.send(JSON.stringify(This.options.heartbeatJson));
                 if(!This.ws||This.ws.readyState!=1){
                     This.timer2=setTimeout(function(){
-                        This.ws.close();
+                        This.ws&&This.ws.close();
                     },This.timeout2);
                 }
             },This.timeout1);
@@ -2428,9 +2447,17 @@ Socket.prototype={
         return this;
     },
     pubSend:function(){
+        if(this.reset){
+            this.reset=false;
+            this.dataJson=copyJson(this.deleteDataJson);
+            this.deleteDataJson={};
+        }
+
         if(this.ws.readyState==1){
             for(var attr in this.dataJson){
+                bind(this.ws,'message',this.fnJson[attr]);
                 this.ws.send(this.dataJson[attr]);
+                this.deleteDataJson[attr]=this.dataJson[attr];
                 delete this.dataJson[attr];
             }
         }
@@ -2443,7 +2470,9 @@ Socket.prototype={
         json=JSON.stringify(json);
 
         if(This.ws.readyState==1){
+            bind(This.ws,'message',This.onMessageFn(key,endFn,finallyFn));
             This.ws.send(json);
+            this.deleteDataJson[key]=json;
         }else{
             This.dataJson[key]=json;
         }
@@ -2453,22 +2482,7 @@ Socket.prototype={
         });
 
         This.keyArr.push(key);
-        This.fnJson[key]=onMessageFn;
-        bind(This.ws,'message',onMessageFn);
-        function onMessageFn(res){
-            var data=null;
-
-            try{
-                data=JSON.parse(res.data);
-
-                data.data=JSON.parse(data.data);
-            }catch(e){}
-
-            finallyFn&&finallyFn(data,res);
-            if(data.reqToken==key){
-                endFn&&endFn(data,res);
-            }
-        }
+        This.fnJson[key]=This.onMessageFn(key,endFn,finallyFn);
 
         return this;
     },
@@ -2524,24 +2538,14 @@ function consoleNull(arr){
 
 //网络处理
 function networkHandle(onlineFn,offlineFn){
-    var oMask=document.createElement('div');
-    var oWrap=document.createElement('div');
-    var textArr=['当前无网络连接！','网络连接已恢复！'];
-
-    oMask.style.cssText='width:100%; height:100%; background-color:rgba(0,0,0,0.6); position:fixed; left:0; top:0; z-index:999999999;';
-    oWrap.style.cssText='width:200px; height:50px; line-height:50px; text-align:center; border-radius:5px; background-color:#fff; font-size:16px; position:absolute; left:0; top:0; right:0; bottom:0; margin:auto; z-index:10;';
-    oMask.appendChild(oWrap);
-
     window.onoffline=function(){
-        oWrap.innerHTML=textArr[0];
-        document.body.appendChild(oMask);
+        alerts('网络已断开！');
         offlineFn&&offlineFn();
     };
     window.ononline=function(){
-        oWrap.innerHTML=textArr[1];
+        alerts('网络已连接！');
         setTimeout(function(){
-            document.body.removeChild(oMask);
-            window.location.reload();
+            webviewRefresh();
         },3000);
         onlineFn&&onlineFn();
     };
@@ -5340,6 +5344,7 @@ function brush(obj,lineWidth,color,endFn){
         var aH=(Math.PI/180)*(360/12*(oHour+oMinute/60)-90);
         var aM=(Math.PI/180)*(360/60*oMinute-90);
         var aS=(Math.PI/180)*(360/60*oSecond-90);
+        var oC=document.getElementById('canvas');
         var oClock=new CanvasClock(oC);
 
         oClock.createDial(0)//创建空白时钟
@@ -5372,10 +5377,12 @@ CanvasClock.prototype={
         return this;
     },
     createScale:function(divide){//生成刻度
+        var angle=(Math.PI/180)*(360/divide);
+
         this.oGC.beginPath();
         for(var i=0;i<divide;i++){
             this.oGC.moveTo(this.iX,this.iY);
-            this.oGC.arc(this.iX,this.iY,this.iR,(Math.PI/180)*(360/divide)*i,(Math.PI/180)*(360/divide)*(i+1));
+            this.oGC.arc(this.iX,this.iY,this.iR,angle*i,angle*(i+1));
         }
         this.oGC.closePath();
         this.oGC.stroke();
