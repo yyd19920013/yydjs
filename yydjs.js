@@ -1008,7 +1008,7 @@ function normalDate(oDate){
 
 //获取星期
 function getWeekName(oDate,str){
-    var oDate=normalDate(oDate);
+    var oDate=normalDate(oDate|new Date());
     var iWeek=oDate.getDay();
     var str=str||'星期';
     var arr=['日','一','二','三','四','五','六'];
@@ -7500,8 +7500,8 @@ function reactSelect(This,key,ev){
     总结：
     一：禁用报错
     1、八进制表示法
-    2、eval函数,arguments、es6新增的关键字做变量
-    3、with语句,函数下callee/caller
+    2、eval、arguments、es6新增的关键字做变量
+    3、eval函数、with语句、函数下callee/caller
 
     二：删除报错
     1、系统内置属性
