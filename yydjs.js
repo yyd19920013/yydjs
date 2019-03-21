@@ -6068,6 +6068,7 @@ function WXPay(params,successFn,failFn,finallyFn){
                     successFn&&successFn(res);
                 }else{
                     alerts('微信支付失败，请重试！');
+                    console.log(res);
                     failFn&&failFn(res);
                 }
                 finallyFn&&finallyFn(res);
