@@ -1008,7 +1008,7 @@ function normalDate(oDate){
 
 //获取星期
 function getWeekName(oDate,str){
-    var oDate=normalDate(oDate|new Date());
+    var oDate=normalDate(oDate||new Date());
     var iWeek=oDate.getDay();
     var str=str||'星期';
     var arr=['日','一','二','三','四','五','六'];
@@ -1156,7 +1156,7 @@ function toFixed0(value,length,closeRound){
     var oldValue=value;
     var value=value+'';
     var arr=value.split('.');
-    var length=length||0;
+    var length=Math.abs(length||0);
     var zero='';
     var rNum='';
 
