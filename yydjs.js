@@ -22,7 +22,7 @@
     4、定位
         4.1、高德地图相关
     5、微信
-        5.1、微信支付与分享
+        5.1、微信支付与微信sdk调用
     6、参考函数
         6.1、各种参考函数
     7、算法函数与设计模式
@@ -2528,6 +2528,25 @@ Socket.prototype={
     1.9、项目中使用
 */
 
+//创建并在body中插入一个脚本
+//src（插入脚本的src）
+//endFn（插入脚本onload时回调函数，会回传一个参数，为true时表示第一次加载）
+function createScript(src,endFn){
+    var src=src||'';
+    var oScript=document.createElement('script');
+
+    if(!document.getElementById(src)){
+        oScript.id=src;
+        oScript.src=src;
+        oScript.onload=function(){
+            endFn&&endFn(true);
+        };
+        document.body.appendChild(oScript);
+    }else{
+        endFn&&endFn(false);
+    }
+};
+
 //开发与线上控制台模式切换
 //arr(数组里面选定的都不输出)
 function consoleNull(arr){
@@ -2561,17 +2580,10 @@ function openMoblieDebug(whiteList){
     var count=0;
 
     function openFn(){
-        var oErudaScript=document.getElementById('//cdn.jsdelivr.net/npm/eruda');
-
-        if(!oErudaScript&&open){
-            var oScript=document.createElement('script');
-
-            oScript.id='//cdn.jsdelivr.net/npm/eruda';
-            oScript.src='//cdn.jsdelivr.net/npm/eruda';
-            oScript.onload=function(){
-                eruda.init();
-            };
-            document.body.appendChild(oScript);
+        if(open){
+            createScript('//cdn.jsdelivr.net/npm/eruda',function(firstLoad){
+                firstLoad&&eruda.init();
+            });
         }
     };
 
@@ -5822,215 +5834,61 @@ function getWeather(city,endFn){
 };
 
 /*
-    5.1、微信支付与分享
+    5.1、微信支付与微信sdk调用
 */
 
-/*微信相关*/
-/*获取微信openId*/
-function getOpenId(url,endFn){
-    //获得微信基本权限的code（无需授权）
-    var snsapi_base='https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxd9b3d678e7ae9181&redirect_uri='+url+'&response_type=code&scope=snsapi_base#wechat_redirect';
-
-    //获得微信最高权限的code（需要授权）
-    var snsapi_userinfo='https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxd9b3d678e7ae9181&redirect_uri='+url+'&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect';
-
-    //如果在本地存储中没有发现openId再进行获取操作
-    if(!lStore.get('yydOpenId')){
-        if(!window.location.search.match('code')){
-            window.location.href=snsapi_base;
-        }else{
-            var json={};
-
-            json.wxcode=strToJson().code;
-            json.appid='wxd9b3d678e7ae9181';
-
-            $.ajax({
-                url:URL+'/action/GetWXOpenID.ashx',
-                data:json,
-                type:'POST',
-                dataType:'json',
-                success:function(data){
-                    if(data.code=='sucess'){
-                        lStore.set('yydOpenId',data.openid);
-                    }
-                    endFn&&endFn(data);
-                }
-            });
-        }
-    }else{
-        endFn&&endFn();
-    }
-};
-
-/*微信支付最终封装(多接口)*/
-function endPayWXAll(index,endUrl){
-    var url=window.location.href;
-    var arr=[];
-    arr[0]='/action/wxpay/WXPayUnite.ashx';//微信统一支付
-    arr[1]='/action/wxpay/WXPayUniteMemberUpgrade.ashx';//会员升级
-    arr[2]='/action/wxpay/WXPayBailUnite.ashx';//二手车支付保证金
-    arr[3]='/action/wxpay/WXPaySecondBailUnite.ashx';//收车方
-    arr[4]='/action/wxpay/WXPaySecondBailSellerUnite.ashx';//卖车方
-
-    getOpenId(url,function(data){
-        //console.log(data);
-        var json={};
-
-        json.trade_type='JSAPI';
-        json.id=strToJson().id;
-        json.openid=lStore.get('yydOpenId');
-        //console.log(json);
-
-        /*微信支付后端集成后数据接口*/
-        $.ajax({
-            url:URL+arr[index],
-            data:json,
-            type:'POST',
-            dataType:'json',
-            success:function(data1){
-                //console.log(data1);
-                if(data1.code=='sucess'){
-                    var json={};
-
-                    json.appId=data1.appId;
-                    json.timeStamp=data1.timeStamp;
-                    json.nonceStr=data1.nonceStr;
-                    json.package=data1.package;
-                    json.signType=data1.signType;
-                    json.paySign=data1.paySign;
-                    json.url=endUrl||'zzzzfPaySuccess.html';
-                    WXPay(json);
-                }else{
-                    alerts(data1.message);
-                }
-            }
-        });
-    });
-};
-
-//微信分享
-// json{
-//     title: '', // 分享标题
-//     desc: '', // 分享描述
-//     imgUrl: '', // 分享图标
-//     link: '', // 分享链接，默认地址
-//     success: function () { //默认
-//        // 用户确认分享后执行的回调函数
-//     },
-//     cancel: function () { //默认
-//        // 用户取消分享后执行的回调函数
-//     }
-// }
-function wxShare(json){
-    $.getScript('https://res.wx.qq.com/open/js/jweixin-1.2.0.js',function(){
-        var json1={};
-
-        json1.url=window.location.href.split('#')[0];
-        var arr=[
-                'onMenuShareTimeline',
-                'onMenuShareAppMessage',
-                'onMenuShareQQ',
-                'onMenuShareWeibo',
-                'onMenuShareQZone'
-            ];
-        wxJsApiSign(json1,function(data){
-            //console.log(data);
-            var data=data.data||{};
-
-            wx.config({
-                debug: false, // 开启调试模式,仅在pc端时才会打印。
-                appId: data.appId||'appId', // 必填，公众号的唯一标识
-                timestamp: data.timestamp||'timestamp', // 必填，生成签名的时间戳
-                nonceStr: data.nonceStr||'nonceStr', // 必填，生成签名的随机串
-                signature: data.signature||'signature',// 必填，签名，见附录1
-                jsApiList: [].concat(arr) // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
-            });
-        });
-
-        wx.checkJsApi({
-            jsApiList: [].concat(arr), // 需要检测的JS接口列表，所有JS接口列表见附录2,
-            success: function(res) {
-                // 以键值对的形式返回，可用的api值true，不可用为false
-                console.log('可用接口',res);
-            }
-        });
-
-        var json2={
-            title: '分享标题', // 分享标题
-            desc: '分享内容', // 分享内容
-            imgUrl: window.location.origin+'/static/images/logoBg.png', // 分享图标
-            link: window.location.href, // 分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
-            success: function () {
-                // 用户确认分享后执行的回调函数
-                console.log('成功');
-            },
-            cancel: function () {
-                // 用户取消分享后执行的回调函数
-                console.log('失败');
-            }
-        };
-
-        if(json){
-            for(var attr in json){
-                console.log(attr,json[attr]);
-                json2[attr]=json[attr];
-            }
-        }
-
-        wx.ready(function(){
-            for(var i=0;i<arr.length;i++){
-                wx[arr[i]](json2);
-            }
-        });
-        wx.error(function(res){
-            console.log('错误',res);
-        });
-    });
-};
-
-//获取微信code（vue版）
+//获取微信code
 var WXCode={
-    //parent（vue对象）
     //appid（微信公众号的appid）
     //componentAppid（第三方合作的appid）
     //userinfo（是否是用户授权模式）
-    get:function(parent,appid,componentAppid,userinfo){
+    //注意：执行get方法之前需先执行listen方法
+    get:function(appid,componentAppid,userinfo){
         if(!isWeixin())return;
-        if(parent){
-            var wxCode=cookie.get('wxCode');
-            var appid=appid||'wxd9b3d678e7ae9181';
-            var componentAppid=componentAppid?'&component_appid='+componentAppid:'';
-            var url=encodeURIComponent(window.location.href);
+        var wxCode=cookie.get('wxCode');
+        var appid=appid||'wxd9b3d678e7ae9181';
+        var componentAppid=componentAppid?'&component_appid='+componentAppid:'';
+        var url=encodeURIComponent(window.location.href);
 
-            if(!wxCode){
-                //获得微信基本权限的code（无需授权）
-                var snsapi_base='https://open.weixin.qq.com/connect/oauth2/authorize?appid='+appid+'&redirect_uri='+url+'&response_type=code&scope=snsapi_base'+componentAppid+'#wechat_redirect';
-                //获得微信最高权限的code（需要授权）
-                var snsapi_userinfo='https://open.weixin.qq.com/connect/oauth2/authorize?appid='+appid+'&redirect_uri='+url+'&response_type=code&scope=snsapi_userinfo'+componentAppid+'&state=STATE#wechat_redirect';
-                var accredit=!userinfo?snsapi_base:snsapi_userinfo;
+        if(!wxCode){
+            //获得微信基本权限的code（无需授权）
+            var snsapi_base='https://open.weixin.qq.com/connect/oauth2/authorize?appid='+appid+'&redirect_uri='+url+'&response_type=code&scope=snsapi_base'+componentAppid+'#wechat_redirect';
+            //获得微信最高权限的code（需要授权）
+            var snsapi_userinfo='https://open.weixin.qq.com/connect/oauth2/authorize?appid='+appid+'&redirect_uri='+url+'&response_type=code&scope=snsapi_userinfo'+componentAppid+'&state=STATE#wechat_redirect';
+            var accredit=!userinfo?snsapi_base:snsapi_userinfo;
 
-                window.location.replace(accredit);
-            }else{
-                return wxCode;
-            }
+            window.location.replace(accredit);
+        }else{
+            return wxCode;
         }
     },
-    //parent（vue对象）
-    //需放在router.afterEach里进行监听
+    //parent（vue对象，非必填）
+    //如果是vue中用，最好放在router.afterEach里进行监听保存code。
     listen:function(parent){
         if(!isWeixin())return;
-        if(parent){
-            var wxCode=cookie.get('wxCode');
-            var code=getSearch('code');
+        var wxCode=cookie.get('wxCode');
+        var code=getSearch('code');
 
-            if(!wxCode&&code){
-                cookie.set('wxCode',code,300);
+        if(!wxCode&&code){
+            cookie.set('wxCode',code,300);
+
+            //此段代码主要用于vue项目地址去掉search的传参
+            if(parent){
+                var currentRoute=parent.$router.currentRoute;
+                var path=currentRoute.path;
+                var query=currentRoute.query;
+
+                window.history.replaceState(null,null,'index.html');
+                parent.$router.replace({
+                    path:path,
+                    query:query,
+                });
             }
         }
     },
 };
 
-/*微信内置对象封装*/
+/*微信内置支付对象封装*/
 function WXPay(params,successFn,failFn,finallyFn){
     function onBridgeReady(){
         WeixinJSBridge.invoke(
@@ -6062,6 +5920,157 @@ function WXPay(params,successFn,failFn,finallyFn){
     }else{
         onBridgeReady();
     }
+};
+
+//微信sdk调用微信api
+/*
+    params:权限验证参数
+    type:微信接口类型
+    config:微信配置
+    readyFn:ready好了，可以在此函数中可以调用微信的api
+
+    所有接口通过wx对象(也可使用jWeixin对象)来调用，参数是一个对象，除了每个接口本身需要传的参数之外，还有以下通用参数：
+    1.success：接口调用成功时执行的回调函数。
+    2.fail：接口调用失败时执行的回调函数。
+    3.complete：接口调用完成时执行的回调函数，无论成功或失败都会执行。
+    4.cancel：用户点击取消时的回调函数，仅部分有用户取消操作的api才会用到。
+    5.trigger: 监听Menu中的按钮点击时触发的方法，该方法仅支持Menu中的相关接口。
+
+    备注：不要尝试在trigger中使用ajax异步请求修改本次分享的内容，因为客户端分享操作是一个同步操作，这时候使用ajax的回包会还没有返回。
+    以上几个函数都带有一个参数，类型为对象，其中除了每个接口本身返回的数据之外，还有一个通用属性errMsg，其值格式如下：
+    调用成功时："xxx:ok" ，其中xxx为调用的接口名
+    用户取消时："xxx:cancel"，其中xxx为调用的接口名
+    调用失败时：其值为具体错误信息
+*/
+function WXSDK(params,type,config,readyFn){
+    var params=params||{};
+    var type=type||'share';
+    var config=config||{};
+    var readyFn=readyFn||function(){};
+
+    createScript('https://res.wx.qq.com/open/js/jweixin-1.4.0.js',function(){
+        var dataJson={
+            share:{//微信分享
+                jsApiList:[
+                    'updateAppMessageShareData',//1.4.0
+                    'updateTimelineShareData',//1.4.0
+                    'onMenuShareWeibo',
+                ],
+                template:{
+                    title:config.title||'分享标题',//分享标题
+                    desc:config.desc||'分享内容',//分享描述
+                    link:config.link||window.location.href,//分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
+                    imgUrl:config.imgUrl||'https://www.muyouche.com/static/images/logoBg.png',//分享图标
+                    success:config.success||function(){
+                        //设置成功
+                        console.log('分享成功');
+                    },
+                },
+            },
+            openLocation:{//微信地图
+                jsApiList:[
+                    'openLocation',
+                ],
+                template:{
+                    latitude:config.latitude||0,//纬度，浮点数，范围为90 ~ -90
+                    longitude:config.longitude||0,//经度，浮点数，范围为180 ~ -180。
+                    name:config.name||'位置名',//位置名
+                    address:config.address||'地址详情说明',//地址详情说明
+                    scale:config.scale||17,//地图缩放级别,整形值,范围从1~28。默认为最大
+                    infoUrl:config.infoUrl||`http://map.baidu.com/?latlng=${config.latitude},${config.longitude}&title=${config.name}&content=${config.address}&output=html`,//在查看位置界面底部显示的超链接,可点击跳转
+                },
+            },
+            getLocation:{//微信地理位置
+                jsApiList:[
+                    'getLocation',
+                ],
+                template:{
+                    type:config.type||'wgs84',//默认为wgs84的gps坐标，如果要返回直接给openLocation用的火星坐标，可传入'gcj02'
+                    success:config.success||function(res){
+                        /*
+                            var latitude = res.latitude; // 纬度，浮点数，范围为90 ~ -90
+                            var longitude = res.longitude; // 经度，浮点数，范围为180 ~ -180。
+                            var speed = res.speed; // 速度，以米/每秒计
+                            var accuracy = res.accuracy; // 位置精度
+                        */
+                        console.log(res);
+                    },
+                },
+            },
+            scanQRCode:{//微信扫一扫
+                jsApiList:[
+                    'scanQRCode',
+                ],
+                template:{
+                    needResult:config.needResult||0,//默认为0，扫描结果由微信处理，1则直接返回扫描结果，
+                    scanType:config.scanType||["qrCode","barCode"],//可以指定扫二维码还是一维码，默认二者都有
+                    success:config.success||function(res){
+                        /*
+                            var result = res.resultStr;// 当needResult 为 1 时，扫码返回的结果
+                        */
+                        console.log(res);
+                    },
+                },
+            },
+            chooseWXPay:{//微信支付
+                jsApiList:[
+                    'chooseWXPay',
+                ],
+                template:{
+                    appId:params.appId,         //公众号名称，由商户传入
+                    timestamp:config.timestamp, //支付签名时间戳，注意微信jssdk中的所有使用timestamp字段均为小写。
+                    nonceStr:config.nonceStr,   //支付签名随机串，不长于 32 位
+                    package:config.package,     //统一支付接口返回的prepay_id参数值，提交格式如：prepay_id=\*\*\*）
+                    signType:config.signType,   //签名方式，默认为'SHA1'，使用新版支付需传入'MD5'
+                    paySign:config.paySign,     //支付签名
+                    success:config.success||function(res){
+                        //支付成功后的回调函数
+                    },
+                    fail:config.fail||function(res){
+                        //支付失败后的回调函数
+                        alerts('微信支付失败，请重试！');
+                        console.log(res);
+                    },
+                },
+            },
+        };
+        var json=dataJson[type];
+        var jsApiList=json.jsApiList;
+        var template=json.template;
+
+        for(var attr in config){
+            template[attr]=config[attr];
+        }
+
+        wx.config({
+            debug:false,                //开启调试模式,仅在pc端时才会打印。
+            appId:params.appId,         //必填，公众号的唯一标识
+            timestamp:params.timestamp, //必填，生成签名的时间戳
+            nonceStr:params.nonceStr,   //必填，生成签名的随机串
+            signature:params.signature, //必填，签名，见附录1
+            jsApiList:jsApiList,        //必填，需要使用的JS接口列表，所有JS接口列表见附录2
+        });
+
+        //备注：checkJsApi接口是客户端6.0.2新引入的一个预留接口，第一期开放的接口均可不使用checkJsApi来检测。
+        wx.checkJsApi({
+            jsApiList:jsApiList,// 需要检测的JS接口列表，所有JS接口列表见附录2,
+            success:function(res){
+                //以键值对的形式返回，可用的api值true，不可用为false
+                console.log('可用接口',res);
+            },
+        });
+
+        wx.ready(function(){
+            for(var i=0;i<jsApiList.length;i++){
+                wx[jsApiList[i]](template);
+            }
+            readyFn&&readyFn();
+        });
+
+        wx.error(function(res){
+            console.log('错误',res);
+        });
+    });
 };
 
 /*
