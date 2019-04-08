@@ -5993,22 +5993,15 @@ var WXCode={
     //parent（vue对象）
     //appid（微信公众号的appid）
     //componentAppid（第三方合作的appid）
-    //directory（可选的跳转目录）
     //userinfo（是否是用户授权模式）
-    get:function(parent,appid,componentAppid,directory,userinfo){
+    get:function(parent,appid,componentAppid,userinfo){
         if(!isWeixin())return;
         if(parent){
             var wxCode=cookie.get('wxCode');
-            var path=parent.$router.currentRoute.path;
-            var query=parent.$router.currentRoute.query;
             var appid=appid||'wxd9b3d678e7ae9181';
             var componentAppid=componentAppid?'&component_appid='+componentAppid:'';
-            var directory=directory||'';
-            var url=window.location.origin+directory+'/index.html'+'?query=';
-            var search=window.location.search;
+            var url=encodeURIComponent(window.location.href);
 
-            query.path=path;
-            url+=JSON.stringify(query);
             if(!wxCode){
                 //获得微信基本权限的code（无需授权）
                 var snsapi_base='https://open.weixin.qq.com/connect/oauth2/authorize?appid='+appid+'&redirect_uri='+url+'&response_type=code&scope=snsapi_base'+componentAppid+'#wechat_redirect';
@@ -6028,22 +6021,10 @@ var WXCode={
         if(!isWeixin())return;
         if(parent){
             var wxCode=cookie.get('wxCode');
-            var query=decodeURIComponent(getSearch('query'));
             var code=getSearch('code');
-            query=query?JSON.parse(query):query;
-            query=query||{};
-            var path=query.path;
 
-            query.code=code;
-            if(!wxCode&&path){
-                delete query.path;
-
-                window.history.replaceState(null,null,'index.html');
+            if(!wxCode&&code){
                 cookie.set('wxCode',code,300);
-                parent.$router.replace({
-                    path:path,
-                    query:query,
-                });
             }
         }
     },
