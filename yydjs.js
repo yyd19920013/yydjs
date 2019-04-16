@@ -2615,6 +2615,26 @@ function copyJson(json){
     return json?JSON.parse(JSON.stringify(json)):json;
 };
 
+//处理ios输入框失去焦点页面不会回到原本位置
+function refreshPosition(){
+    setTimeout(()=>{
+        if(!isSafari())return;
+        var oInput=QSA('input,textarea');
+        var oldPosition=0;
+
+        for(var i=0;i<oInput.length;i++){
+            bind(oInput[i],'focus',function(){
+                oldPosition=document.body.scrollTop;
+            });
+            bind(oInput[i],'blur',function(){
+                if(document.body.scrollTop!=oldPosition){
+                    document.body.scrollTop=oldPosition;
+                }
+            });
+        }
+    },300);
+};
+
 //加密函数，需要引入crypto-js
 //加密顺序，des->base64->uri
 /*
@@ -2826,10 +2846,15 @@ function toast(str,bool,msec){
 };
 
 //所有积累正则
+//reg（验证正则）
+//iReg（输入正则）
+//tReg（替换正则）
 var regJson={
     number:{
         name:'数字',
-        reg:/^[0-9]+$/,
+        reg:/^[0-9]+\.?[0-9]+$/,
+        iReg:/^[0-9]*\.?[0-9]*$/,
+        tReg:/[0-9]+\.?[0-9]+/g,
     },
     aa:{
         name:'小写字母',
@@ -2842,7 +2867,8 @@ var regJson={
     aA:{
         name:'字母',
         reg:/^[a-zA-Z]+$/,
-        iReg:/[a-zA-Z]+/g,
+        iReg:/^[a-zA-Z]*$/,
+        tReg:/[a-zA-Z]+/g,
     },
     aa1:{
         name:'小写字母或数字',
@@ -2859,12 +2885,14 @@ var regJson={
     zh:{
         name:'中文',
         reg:/^[\u2E80-\u9FFF]+$/,
-        iReg:/[\u2E80-\u9FFF]+/g,
+        iReg:/^[\u2E80-\u9FFF]*$/,
+        tReg:/[\u2E80-\u9FFF]+/g,
     },
     zhEn:{
         name:'中文或英文',
         reg:/^[\u2E80-\u9FFFa-zA-Z]+$/,
-        iReg:/[\u2E80-\u9FFFa-zA-Z]+/g,
+        iReg:/^[\u2E80-\u9FFFa-zA-Z]*$/,
+        tReg:/[\u2E80-\u9FFFa-zA-Z]+/g,
     },
     mobile:{
         name:'手机号',
@@ -5924,9 +5952,9 @@ function WXPay(params,successFn,failFn,finallyFn){
 
 //微信sdk调用微信api
 /*
-    params:权限验证参数
+    config:权限验证配置
     type:微信接口类型
-    config:微信配置
+    params:微信接口参数
     readyFn:ready好了，可以在此函数中可以调用微信的api
 
     所有接口通过wx对象(也可使用jWeixin对象)来调用，参数是一个对象，除了每个接口本身需要传的参数之外，还有以下通用参数：
@@ -5942,7 +5970,7 @@ function WXPay(params,successFn,failFn,finallyFn){
     用户取消时："xxx:cancel"，其中xxx为调用的接口名
     调用失败时：其值为具体错误信息
 */
-function WXSDK(params,type,config,readyFn){
+function WXSDK(config,type,params,readyFn){
     var params=params||{};
     var type=type||'share';
     var config=config||{};
@@ -5957,11 +5985,11 @@ function WXSDK(params,type,config,readyFn){
                     'onMenuShareWeibo',
                 ],
                 template:{
-                    title:config.title||'分享标题',//分享标题
-                    desc:config.desc||'分享内容',//分享描述
-                    link:config.link||window.location.href,//分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
-                    imgUrl:config.imgUrl||'https://www.muyouche.com/static/images/logoBg.png',//分享图标
-                    success:config.success||function(){
+                    title:params.title||'分享标题',//分享标题
+                    desc:params.desc||'分享内容',//分享描述
+                    link:params.link||window.location.href,//分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
+                    imgUrl:params.imgUrl||'https://www.muyouche.com/static/images/logoBg.png',//分享图标
+                    success:params.success||function(){
                         //设置成功
                         console.log('分享成功');
                     },
@@ -5972,12 +6000,12 @@ function WXSDK(params,type,config,readyFn){
                     'openLocation',
                 ],
                 template:{
-                    latitude:config.latitude||0,//纬度，浮点数，范围为90 ~ -90
-                    longitude:config.longitude||0,//经度，浮点数，范围为180 ~ -180。
-                    name:config.name||'位置名',//位置名
-                    address:config.address||'地址详情说明',//地址详情说明
-                    scale:config.scale||17,//地图缩放级别,整形值,范围从1~28。默认为最大
-                    infoUrl:config.infoUrl||`http://map.baidu.com/?latlng=${config.latitude},${config.longitude}&title=${config.name}&content=${config.address}&output=html`,//在查看位置界面底部显示的超链接,可点击跳转
+                    latitude:params.latitude||0,//纬度，浮点数，范围为90 ~ -90
+                    longitude:params.longitude||0,//经度，浮点数，范围为180 ~ -180。
+                    name:params.name||'位置名',//位置名
+                    address:params.address||'地址详情说明',//地址详情说明
+                    scale:params.scale||17,//地图缩放级别,整形值,范围从1~28。默认为最大
+                    infoUrl:params.infoUrl||`http://map.baidu.com/?latlng=${params.latitude},${params.longitude}&title=${params.name}&content=${params.address}&output=html`,//在查看位置界面底部显示的超链接,可点击跳转
                 },
             },
             getLocation:{//微信地理位置
@@ -5985,8 +6013,8 @@ function WXSDK(params,type,config,readyFn){
                     'getLocation',
                 ],
                 template:{
-                    type:config.type||'wgs84',//默认为wgs84的gps坐标，如果要返回直接给openLocation用的火星坐标，可传入'gcj02'
-                    success:config.success||function(res){
+                    type:params.type||'wgs84',//默认为wgs84的gps坐标，如果要返回直接给openLocation用的火星坐标，可传入'gcj02'
+                    success:params.success||function(res){
                         /*
                             var latitude = res.latitude; // 纬度，浮点数，范围为90 ~ -90
                             var longitude = res.longitude; // 经度，浮点数，范围为180 ~ -180。
@@ -6002,9 +6030,9 @@ function WXSDK(params,type,config,readyFn){
                     'scanQRCode',
                 ],
                 template:{
-                    needResult:config.needResult||0,//默认为0，扫描结果由微信处理，1则直接返回扫描结果，
-                    scanType:config.scanType||["qrCode","barCode"],//可以指定扫二维码还是一维码，默认二者都有
-                    success:config.success||function(res){
+                    needResult:params.needResult||0,//默认为0，扫描结果由微信处理，1则直接返回扫描结果，
+                    scanType:params.scanType||["qrCode","barCode"],//可以指定扫二维码还是一维码，默认二者都有
+                    success:params.success||function(res){
                         /*
                             var result = res.resultStr;// 当needResult 为 1 时，扫码返回的结果
                         */
@@ -6018,15 +6046,15 @@ function WXSDK(params,type,config,readyFn){
                 ],
                 template:{
                     appId:params.appId,         //公众号名称，由商户传入
-                    timestamp:config.timestamp, //支付签名时间戳，注意微信jssdk中的所有使用timestamp字段均为小写。
-                    nonceStr:config.nonceStr,   //支付签名随机串，不长于 32 位
-                    package:config.package,     //统一支付接口返回的prepay_id参数值，提交格式如：prepay_id=\*\*\*）
-                    signType:config.signType,   //签名方式，默认为'SHA1'，使用新版支付需传入'MD5'
-                    paySign:config.paySign,     //支付签名
-                    success:config.success||function(res){
+                    timestamp:params.timestamp, //支付签名时间戳，注意微信jssdk中的所有使用timestamp字段均为小写。
+                    nonceStr:params.nonceStr,   //支付签名随机串，不长于 32 位
+                    package:params.package,     //统一支付接口返回的prepay_id参数值，提交格式如：prepay_id=\*\*\*）
+                    signType:params.signType,   //签名方式，默认为'SHA1'，使用新版支付需传入'MD5'
+                    paySign:params.paySign,     //支付签名
+                    success:params.success||function(res){
                         //支付成功后的回调函数
                     },
-                    fail:config.fail||function(res){
+                    fail:params.fail||function(res){
                         //支付失败后的回调函数
                         alerts('微信支付失败，请重试！');
                         console.log(res);
@@ -6038,16 +6066,16 @@ function WXSDK(params,type,config,readyFn){
         var jsApiList=json.jsApiList;
         var template=json.template;
 
-        for(var attr in config){
-            template[attr]=config[attr];
+        for(var attr in params){
+            template[attr]=params[attr];
         }
 
         wx.config({
             debug:false,                //开启调试模式,仅在pc端时才会打印。
-            appId:params.appId,         //必填，公众号的唯一标识
-            timestamp:params.timestamp, //必填，生成签名的时间戳
-            nonceStr:params.nonceStr,   //必填，生成签名的随机串
-            signature:params.signature, //必填，签名，见附录1
+            appId:config.appId,         //必填，公众号的唯一标识
+            timestamp:config.timestamp, //必填，生成签名的时间戳
+            nonceStr:config.nonceStr,   //必填，生成签名的随机串
+            signature:config.signature, //必填，签名，见附录1
             jsApiList:jsApiList,        //必填，需要使用的JS接口列表，所有JS接口列表见附录2
         });
 
