@@ -1324,15 +1324,19 @@ function textHandle(obj,index){
 };
 
 //选中文字兼容
-function selectText(){
-    var str='';
+function selectText(endFn){
+    var text='';
+    var selectedObj=null;
 
-    if(document.selection){
-        str=document.selection.createRange().text;//ie
+    if(window.getSelection){
+        selectedObj=window.getSelection();//标准
+        text=selectedObj.toString();
     }else{
-        str=window.getSelection().toString();//标准
+        selectedObj=document.selection.createRange();//ie
+        text=selectedObj.text;
     }
-    return str;
+    endFn&&endFn(selectedObj,text);
+    return text;
 };
 
 //图片上传预览
@@ -4732,7 +4736,7 @@ function waterWave(msec,obj,iDis,color,color1,endFn){
     });
 };
 
-//抛物线运动插件(公式：y=ax^2+bx^2+c)
+//抛物线运动插件(公式：y=ax^2+bx+c)
 //obj(要运动的对象)
 //a(曲率，为正开口向下，负开口向上，默认0.001)
 //t(抛物线运动的总时间)
