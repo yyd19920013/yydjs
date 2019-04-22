@@ -671,7 +671,7 @@ var cookie={
     get:function(key){//获取cookie
         var str=document.cookie;
         var reg1=/\=+/g;
-        var reg2=/\;+/g;
+        var reg2=/(\;|[\;\s])+/g;
 
         try{
             str=str.replace(reg1,'":"');
@@ -2637,6 +2637,21 @@ function refreshPosition(){
             });
         }
     },300);
+};
+
+//限制文字长度，超出省略号
+function limitText(text,length,symbol){
+    var text=text||'';
+    var length=length||6;
+    var symbol=symbol||'...';
+    var result='';
+
+    if(text&&text.length>length){
+        result=text.substring(0,length)+symbol;
+    }else{
+        result=text;
+    }
+    return result;
 };
 
 //加密函数，需要引入crypto-js
