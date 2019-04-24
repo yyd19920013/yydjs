@@ -1367,8 +1367,6 @@ function selectText(endFn){
         selectedObj:selectedObj,//Selection对象
         text:text,//选中的文字
         html:html,//选中的html
-        startOffset:selectedObj.anchorOffset,//选中开始的位置（需要判断是否是从前往后选）
-        endOffset:selectedObj.focusOffset,//选中结束的位置（注意选中多个元素时，该位置是最后一个元素选中的位置）
         getDomList:getDomList,//获取选中的真实dom
     });
     return text;
