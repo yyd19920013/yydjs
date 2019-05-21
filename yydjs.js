@@ -443,7 +443,7 @@ function soleString32(){
     return resultStr;
 };
 
-//自定义事件的实现
+//自定义事件的实现（发布订阅模式）
 var customEvent={
     json:{},
     on:function(evName,fn){
@@ -456,13 +456,14 @@ var customEvent={
         }
         return this;
     },
-    emit:function(evName,data){
+    emit:function(evName){
         var evFnArr=this.json[evName];
+        var params=Array.prototype.slice.call(arguments,1);
 
         if(Type(evFnArr)=='object'){
             for(var attr in this.json[evName]){
                 if(Type(this.json[evName][attr])=='function'){
-                    this.json[evName][attr](data);
+                    this.json[evName][attr].apply(this,params);
                 }
             }
         }
@@ -687,7 +688,7 @@ var cookie={
 
         oDate.setDate(oDate.getDate()-1);
         oDate=oDate.toGMTString();
-        document.cookie=key+'='+''+';expires='+oDate;
+        document.cookie=key+'=;expires='+oDate;
     },
 };
 
@@ -2845,6 +2846,27 @@ function limitText(text,length,symbol){
     return result;
 };
 
+//根据后缀名判断文件类型
+function fileType(suffix){
+    var suffix=suffix||'';
+    var typeList=['image','audio','video','file'];
+    var length=typeList.length-1;
+    var suffixJson={
+        image:['png','jpg','jpeg','gif','ico','bmp','pic','tif'],
+        audio:['mp3','ogg','wav','acc','vorbis'],
+        video:['mp4','webm','avi','rmvb','3gp','flv'],
+    };
+    var resultList=[];
+
+    for(var attr in suffixJson){
+        resultList.push(!!~suffixJson[attr].indexOf(suffix));
+    }
+
+    var posIndex=resultList.indexOf(true);
+
+    return posIndex!=-1?typeList[posIndex]:typeList[length];
+};
+
 //加密函数，需要引入crypto-js
 //加密顺序，des->base64->uri
 /*
@@ -3060,9 +3082,15 @@ function toast(str,bool,msec){
 //iReg（输入正则）
 //tReg（替换正则）
 var regJson={
+    int:{
+        name:'整型',
+        reg:/^[0-9]+$/,
+        iReg:/^[0-9]*$/,
+        tReg:/[0-9]+/g,
+    },
     number:{
         name:'数字',
-        reg:/^[0-9]+\.?[0-9]+$/,
+        reg:/^[0-9]+\.?[0-9]*$/,
         iReg:/^[0-9]*\.?[0-9]*$/,
         tReg:/[0-9]+\.?[0-9]+/g,
     },
