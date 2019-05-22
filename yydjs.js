@@ -697,11 +697,15 @@ var cookie={
         var reg2=/(\;|[\;\s])+/g;
 
         try{
-            str=str.replace(reg1,'":"');
-            str=str.replace(reg2,'","');
-            str='{"'+str;
-            str+='"}';
-            str=JSON.parse(str);
+            if(str.length){
+                str=str.replace(reg1,'":"');
+                str=str.replace(reg2,'","');
+                str='{"'+str;
+                str+='"}';
+                str=JSON.parse(str);
+            }else{
+                str={};
+            }
         }catch(e){}
 
         return str;
