@@ -662,14 +662,36 @@ function drag(obj,lMin,lMax,tMin,tMax,sFn,mFn,endFn){
 //cookie操作
 var cookie={
     set:function(key,value,sec){
+        var value=value;
         var sec=sec||60*60*24*30;
+        var type=Type(value);
         var oDate=new Date();
+
+        switch(type){
+            case 'object':
+            case 'array':
+                    value=JSON.stringify(value);
+                break;
+        }
 
         oDate.setSeconds(oDate.getSeconds()+sec);
         oDate=oDate.toGMTString();
         document.cookie=key+'='+encodeURIComponent(value)+';expires='+oDate;
     },
-    get:function(key){//获取cookie
+    get:function(key){
+        var str=document.cookie;
+        var reg=new RegExp('(^|(;\\s))'+key+'=([^;\\s]+)((;\\s)|$)');
+        var result=str.match(reg);
+
+        result=result?decodeURIComponent(result[3]):'';
+
+        try{
+            result=JSON.parse(result);
+        }catch(e){}
+
+        return result;
+    },
+    getKeys:function(){
         var str=document.cookie;
         var reg1=/\=+/g;
         var reg2=/(\;|[\;\s])+/g;
@@ -681,14 +703,32 @@ var cookie={
             str+='"}';
             str=JSON.parse(str);
         }catch(e){}
-        return str[key]?decodeURIComponent(str[key]):str[key];
+
+        return str;
     },
-    remove:function(key){//删除cookie
+    getAll:function(){
+        var json={};
+        var keys=this.getKeys();
+
+        for(var attr in keys){
+            json[attr]=this.get(attr);
+        }
+
+        return  json;
+    },
+    remove:function(key){
         var oDate=new Date();
 
         oDate.setDate(oDate.getDate()-1);
         oDate=oDate.toGMTString();
         document.cookie=key+'=;expires='+oDate;
+    },
+    clear:function(){
+        var keys=this.getKeys();
+
+        for(var attr in keys){
+            this.remove(attr);
+        }
     },
 };
 
