@@ -1957,8 +1957,11 @@ function notification(config,eventConfig){
             Notification.requestPermission(function(status){
                 var oN=new Notification(config.title,config);
 
+                bind(oN,'click',function(){
+                    window.focus();
+                });
                 for(var attr in eventConfig){
-                    oN[attr]=eventConfig[attr];
+                    bind(oN,attr,eventConfig[attr]);
                 }
             });
         }else{
@@ -4957,6 +4960,7 @@ function waterWave(msec,obj,iDis,color,color1,endFn){
     var iDate=0;
     var click=false;
 
+    obj.style.userSelect='none';
     bind(obj,'touchstart',fn1);
     function fn1(ev){
         clearInterval(timer);
