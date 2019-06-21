@@ -1931,7 +1931,7 @@ function getFullscreenAPI(obj){
     granted：用户明确同意接收通知。
     denied：用户明确拒绝接收通知。
 
-    config(通知的配置项)
+    config（通知的配置项）
     title：通知标题
     body：通知内容
     tag：通知的ID，格式为字符串。一组相同tag的通知，不会同时显示，只会在用户关闭前一个通知后，在原位置显示
@@ -1939,11 +1939,13 @@ function getFullscreenAPI(obj){
     dir：文字方向，可能的值为auto、ltr（从左到右）和rtl（从右到左），一般是继承浏览器的设置
     lang：使用的语种，比如en-US、zh-CN
 
-    eventConfig(通知的事件配置项)
+    eventConfig（通知的事件配置项）
     show：通知显示给用户时触发
     click：用户点击通知时触发
     close：用户关闭通知时触发
     error：通知出错时触发（大多数发生在通知无法正确显示时）
+
+    Notification.close()（关闭通知的方法）
 */
 function notification(config,eventConfig){
     var config=config||{};
@@ -1961,7 +1963,9 @@ function notification(config,eventConfig){
                     window.focus();
                 });
                 for(var attr in eventConfig){
-                    bind(oN,attr,eventConfig[attr]);
+                    bind(oN,attr,function(ev){
+                        eventConfig[attr](ev,oN);
+                    });
                 }
             });
         }else{
@@ -2509,6 +2513,7 @@ function axiosWrap(config){
 };
 
 //WebSocket请求
+//注：只能send字符串格式，一般用字符串json格式，断线会重新send之前send过的数据
 /*
     主要api：
     var socMarket=Socket.init({
@@ -2521,11 +2526,11 @@ function axiosWrap(config){
 
     socMarket.send({//发送的参数
 
-    },function(res){//reqToken匹配的成功回调
+    },function(res){//success函数，reqToken匹配的成功回调
 
     },function(res){//finally函数，不管是否匹配reqToken都会走
 
-    },function(sendJson){//intervalSend函数，用于间隔执行send方法（websocket不会一直推送数据时需要用到）
+    },function(sendJson){//intervalSend函数，用于间隔执行send方法（可以在此写心跳重连函数）
         var timer=setInterval(function(){
             sendJson();
         },1000);
@@ -2535,7 +2540,7 @@ function axiosWrap(config){
     var socMarket=new Socket();
 
     socMarket.init({
-        url:'wss://api2018cfd-test.ga096.cn/app/websocket/',
+        url:'wss://api2018cfd-dev.ga096.cn/app/websocket/',
         heartbeatJson:{
             CMD:'1000',
             token:'',
@@ -2545,35 +2550,24 @@ function axiosWrap(config){
         },
     });
 
-    function socketSend(json,endFn,intervalSend){
-        var data=JSON.stringify(json.DATA);
-
-        var json={
-            CMD:json.CMD,
-            token:json.token||'',
-            DATA:json.DATA,
-        };
-
-        socMarket.send(json,null,endFn,intervalSend);
-    };
-
-    function subMarket(arr,endFn,intervalSend){
+    function subMarket(params,arr,endFn,intervalSendFn){
         var DATA=arr.map((item,index)=>({
             productCode:item,
         }));
-        var json={
+        var params=Object.assign({},params,{
             CMD:'1004',
-            DATA,
-        };
+            token:params.token||'',
+            DATA:JSON.stringify(DATA),
+        });
 
-        socketSend(json,function(res){
+        socMarket.send(params,null,function(res){
             if(res.CMD=='1005')endFn(res);
-        },intervalSend);
+        },intervalSendFn);
     };
 
     var timer=null;
 
-    subMarket(['BTCUSD','EOSUSD','ETHUSD'],function(res){
+    subMarket({},['BTCUSD','EOSUSD','ETHUSD'],function(res){
         console.log(res);
     },function(sendJson){
         clearInterval(timer);
@@ -2584,9 +2578,9 @@ function axiosWrap(config){
 */
 function Socket(){
     this.ws=null;
-    this.dataJson={};
-    this.deleteDataJson={};
-    this.fnJson={};
+    this.paramsJson={};
+    this.deleteParamsJson={};
+    this.messageFnJson={};
     this.options={};
 
     this.timer=null;
@@ -2598,7 +2592,7 @@ function Socket(){
 
     this.first=true;
     this.onOff=true;
-    this.reset=false;
+    this.resend=false;
     this.keyArr=[];
 
     return this;
@@ -2632,13 +2626,13 @@ Socket.prototype={
 
             bind(This.ws,'close',function(res){
                 This.reconect();
-                This.reset=true;
+                This.resend=true;
 
             });
 
             bind(This.ws,'error',function(res){
                 This.reconect();
-                This.reset=true;
+                This.resend=true;
             });
         };
 
@@ -2654,7 +2648,7 @@ Socket.prototype={
 
         return this;
     },
-    onMessageFn:function(key,endFn,finallyFn){
+    messageFn:function(key,successFn,finallyFn){
         return function(res){
             var data=null;
 
@@ -2664,8 +2658,8 @@ Socket.prototype={
             }catch(e){}
 
             finallyFn&&finallyFn(data,res);
-            if(data.reqToken==key){
-                endFn&&endFn(data,res);
+            if(data&&data.reqToken==key){
+                successFn&&successFn(data,res);
             }
         };
     },
@@ -2690,42 +2684,44 @@ Socket.prototype={
         return this;
     },
     pubSend:function(){
-        if(this.reset){
-            this.reset=false;
-            this.dataJson=copyJson(this.deleteDataJson);
-            this.deleteDataJson={};
+        if(this.resend){
+            this.resend=false;
+            this.paramsJson=copyJson(this.deleteParamsJson);
+            this.deleteParamsJson={};
         }
 
         if(this.ws.readyState==1){
-            for(var attr in this.dataJson){
-                bind(this.ws,'message',this.fnJson[attr]);
-                this.ws.send(this.dataJson[attr]);
-                this.deleteDataJson[attr]=this.dataJson[attr];
-                delete this.dataJson[attr];
+            for(var attr in this.paramsJson){
+                bind(this.ws,'message',this.messageFnJson[attr]);
+                this.ws.send(this.paramsJson[attr]);
+                this.deleteParamsJson[attr]=this.paramsJson[attr];
+                delete this.paramsJson[attr];
             }
         }
     },
-    send:function(json,endFn,finallyFn,intervalSend){
+    send:function(params,successFn,finallyFn,intervalSendFn){
+        //send函数中的params指定reqToken（注意在别重复）时，可以给clearOne传reqToken取消订阅该业务的函数，否则clearOne只能取消最后一个订阅函数
         var This=this;
-        var key=soleString32();
+        var key=params.reqToken||soleString32();
+        var messageFn=This.messageFn(key,successFn,finallyFn);
 
-        json.reqToken=key;
-        json=JSON.stringify(json);
+        params.reqToken=key;
+        params=JSON.stringify(params);
 
         if(This.ws.readyState==1){
-            bind(This.ws,'message',This.onMessageFn(key,endFn,finallyFn));
-            This.ws.send(json);
-            this.deleteDataJson[key]=json;
+            bind(This.ws,'message',messageFn);
+            This.ws.send(params);
+            This.deleteParamsJson[key]=params;
         }else{
-            This.dataJson[key]=json;
+            This.paramsJson[key]=params;
         }
 
-        intervalSend&&intervalSend(function(){
-            This.ws.send(json);
+        intervalSendFn&&intervalSendFn(function(){
+            This.ws.send(params);
         });
 
         This.keyArr.push(key);
-        This.fnJson[key]=This.onMessageFn(key,endFn,finallyFn);
+        This.messageFnJson[key]=messageFn;
 
         return this;
     },
@@ -2742,20 +2738,21 @@ Socket.prototype={
 
         return this;
     },
-    clearOne:function(){
-        var key=this.keyArr.pop();
+    clearOne:function(reqToken){
+        //send函数中的params指定reqToken（注意在别重复）时，可以给clearOne传reqToken取消订阅该业务的函数，否则clearOne只能取消最后一个订阅函数
+        var key=reqToken||this.keyArr.pop();
 
-        if(key&&this.fnJson[key]){
-            unbind(this.ws,'message',this.fnJson[key]);
-            delete this.fnJson[key];
+        if(key&&this.messageFnJson[key]){
+            unbind(this.ws,'message',this.messageFnJson[key]);
+            delete this.messageFnJson[key];
+            delete this.deleteParamsJson[key]
         }
 
         return this;
     },
     clearAll:function(){
-        for(var attr in this.fnJson){
-            unbind(this.ws,'message',this.fnJson[attr]);
-            delete this.fnJson[attr];
+        for(var attr in this.messageFnJson){
+            this.clearOne();
         }
 
         return this;
