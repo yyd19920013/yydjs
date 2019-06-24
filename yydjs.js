@@ -1950,6 +1950,7 @@ function getFullscreenAPI(obj){
 function notification(config,eventConfig){
     var config=config||{};
     var eventConfig=eventConfig||{};
+    var oN=null;
 
     config.title=config.title||'无标题';
     config.body=config.body||'无内容';
@@ -1957,7 +1958,7 @@ function notification(config,eventConfig){
     if(window.Notification){
         if(Notification.permission!='denied'){
             Notification.requestPermission(function(status){
-                var oN=new Notification(config.title,config);
+                oN=new Notification(config.title,config);
 
                 bind(oN,'click',function(){
                     window.focus();
@@ -1974,6 +1975,8 @@ function notification(config,eventConfig){
     }else{
         console.log('你的浏览器不支持通知');
     }
+
+    return oN;
 };
 
 //利用getUserMedia和canvas裁切视频并保存图片
