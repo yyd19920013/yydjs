@@ -1541,6 +1541,43 @@ function selectText(endFn){
     return text;
 };
 
+//粘贴事件处理
+function onPaste(obj,endFn){
+    bind(obj,'paste',pasteFn);
+    function pasteFn(ev){
+        var ev=ev||event;
+        var itemList=[];
+        var clipboardData=[];
+        var windowUrl=window.URL||window.webkitURL;
+
+        if(ev.clipboardData&&ev.clipboardData.items){
+            var items=ev.clipboardData.items;
+
+            clipboardData=items;
+            for(var i=0;i<items.length;i++){
+                var item=items[i];
+                var itemJson={};
+
+                itemJson.type=item.kind;
+                switch(item.kind){
+                    case 'string':
+                            item.getAsString(function(text){
+                                itemJson.text=text;
+                            });
+                        break;
+                    case 'file':
+                            itemJson.file=item.getAsFile();
+                            itemJson.previewUrl=windowUrl.createObjectURL(itemJson.file);
+                        break;
+                }
+                itemList.push(itemJson);
+            }
+        }
+
+        endFn&&endFn(itemList,clipboardData);
+    };
+};
+
 //图片文件转base64字符串
 function imgFilesToBase64(files,endFn){
     var files=files||[];
@@ -2777,16 +2814,31 @@ Socket.prototype={
 function createScript(src,endFn){
     var src=src||'';
     var oScript=document.createElement('script');
+    var currentScript=window[src]||oScript;
 
     if(!document.getElementById(src)){
         oScript.id=src;
         oScript.src=src;
-        oScript.onload=function(){
+        bind(currentScript,'load',function(){
+            currentScript.loaded=true;
             endFn&&endFn(true);
-        };
-        document.body.appendChild(oScript);
+        });
+        if(!window[src]){
+            window[src]=oScript;
+        }
+        clearTimeout(window[src+'timer']);
+        window[src+'timer']=setTimeout(()=>{
+            document.body.appendChild(window[src]);
+        });
     }else{
-        endFn&&endFn(false);
+        if(!currentScript.loaded){
+            bind(currentScript,'load',function(){
+                currentScript.loaded=true;
+                endFn&&endFn(false);
+            });
+        }else{
+            endFn&&endFn(false);
+        }
     }
 };
 
@@ -6349,7 +6401,7 @@ function WXSDK(config,type,params,readyFn){
             },
         };
         var json=dataJson[type];
-        var jsApiList=json.jsApiList;
+        var jsApiList=copyJson(json.jsApiList);
         var template=json.template;
 
         for(var attr in params){
@@ -6357,17 +6409,17 @@ function WXSDK(config,type,params,readyFn){
         }
 
         wx.config({
-            debug:false,                //开启调试模式,仅在pc端时才会打印。
-            appId:config.appId,         //必填，公众号的唯一标识
-            timestamp:config.timestamp, //必填，生成签名的时间戳
-            nonceStr:config.nonceStr,   //必填，生成签名的随机串
-            signature:config.signature, //必填，签名，见附录1
-            jsApiList:jsApiList,        //必填，需要使用的JS接口列表，所有JS接口列表见附录2
+            debug:false,                        //开启调试模式,仅在pc端时才会打印。
+            appId:config.appId,                 //必填，公众号的唯一标识
+            timestamp:config.timestamp,         //必填，生成签名的时间戳
+            nonceStr:config.nonceStr,           //必填，生成签名的随机串
+            signature:config.signature,         //必填，签名，见附录1
+            jsApiList:copyJson(json.jsApiList), //必填，需要使用的JS接口列表，所有JS接口列表见附录2
         });
 
         //备注：checkJsApi接口是客户端6.0.2新引入的一个预留接口，第一期开放的接口均可不使用checkJsApi来检测。
         wx.checkJsApi({
-            jsApiList:jsApiList,// 需要检测的JS接口列表，所有JS接口列表见附录2,
+            jsApiList:copyJson(json.jsApiList),// 需要检测的JS接口列表，所有JS接口列表见附录2,
             success:function(res){
                 //以键值对的形式返回，可用的api值true，不可用为false
                 console.log('可用接口',res);
