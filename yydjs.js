@@ -2826,10 +2826,7 @@ function createScript(src,endFn){
         if(!window[src]){
             window[src]=oScript;
         }
-        clearTimeout(window[src+'timer']);
-        window[src+'timer']=setTimeout(()=>{
-            document.body.appendChild(window[src]);
-        });
+        document.body.appendChild(window[src]);
     }else{
         if(!currentScript.loaded){
             bind(currentScript,'load',function(){
