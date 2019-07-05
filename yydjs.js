@@ -1028,6 +1028,22 @@ function toTwo(n){
     return +n<10?'0'+n:n+'';
 };
 
+//补零函数
+//value（需要补零的值）
+//length（需要补零的长度(数量)）
+//isBehind（是否在末尾补零）
+function zeroFill(value,length,isBehind){
+    var value=value||'';
+    var length=length>0?length:0;
+    var zeroStr='';
+
+    for(var i=0;i<length;i++){
+        zeroStr+='0';
+    }
+
+    return !isBehind?zeroStr+value:value+zeroStr;
+};
+
 //算出本月天数
 //getMonth获得的月份是从0开始，要加1
 //下月第0天就是最后一天，-1=倒数第二天，国外月份从0开始,逗号隔开年月日new Date之后月份要大一个月，字符串是正常的
@@ -1059,23 +1075,6 @@ function getWeekName(oDate,str){
     var arr=['日','一','二','三','四','五','六'];
 
     return str+arr[iWeek];
-};
-
-//根据秒数获取年||月||日||时||分||秒
-function formatSecond(seconds,mode){
-    var aMinute=60;
-    var aHour=aMinute*60;
-    var aDay=aHour*24;
-    var json={
-        year:Math.floor(seconds/(365*aDay))||0,
-        month:Math.floor(seconds/(30*aDay))||0,
-        day:Math.floor(seconds/aDay)||0,
-        hour:Math.floor(seconds/aHour)||0,
-        minute:toTwo(Math.floor(seconds/aMinute)||0),
-        second:toTwo(Math.floor(seconds%60)||0),
-    };
-
-    return json[mode||'second'];
 };
 
 //根据出生日期获取年龄
@@ -1125,14 +1124,83 @@ function getSexAndDob(identity){
     return sexAndDob;
 };
 
+//时间格式化函数（根据秒数来格式化）
+//seconds（多少秒）
+//fmt（格式匹配）
+//adjustFmt（是否自动调整格式，会删除无效的格式）
+//年(y)、月(M)、日(d)、小时(h)、分(m)、秒(s)，都可以用1到任意位占位符
+/*
+    例子：
+    secondFormat(86400*365+86400*30+86400+3600+60+1,'yy/MM/dd hh:mm:ss'); //01/01/01 01:01:01
+    secondFormat(86400+3600+60+1,'hh:mm:ss'); //25:01:01
+*/
+function secondFormat(seconds,fmt,adjustFmt){
+    var fmt=fmt||'yy/MM/dd hh:mm:ss';
+    var aMinute=60;
+    var aHour=aMinute*60;
+    var aDay=aHour*24;
+    var aMonth=aDay*30;
+    var aYear=aDay*365;
+
+    var iYears=Math.floor(seconds/aYear);
+    var dMonth=seconds-iYears*aYear>0?seconds-iYears*aYear:0;
+    dMonth=~fmt.indexOf('y')?dMonth:seconds;
+    var iMonths=Math.floor(dMonth/aMonth);
+    var dDay=dMonth-iMonths*aMonth>0?dMonth-iMonths*aMonth:0;
+    dDay=~fmt.indexOf('M')?dDay:seconds;
+    var iDays=Math.floor(dDay/aDay);
+    var dHour=dDay-iDays*aDay>0?dDay-iDays*aDay:0;
+    dHour=~fmt.indexOf('d')?dHour:seconds;
+    var iHours=Math.floor(dHour/aHour);
+    var dMinutes=dHour-iHours*aHour>0?dHour-iHours*aHour:0;
+    dMinutes=~fmt.indexOf('h')?dMinutes:seconds;
+    var iMinutes=Math.floor(dMinutes/aMinute);
+    var dSeconds=dMinutes-iMinutes*aMinute?dMinutes-iMinutes*aMinute:0;
+    dSeconds=~fmt.indexOf('m')?dSeconds:seconds;
+    var iSeconds=dSeconds;
+
+    var time={
+        'y+':iYears,
+        'M+':iMonths,
+        'd+':iDays,
+        'h+':iHours,
+        'm+':iMinutes,
+        's+':iSeconds,
+    };
+    var result='';
+    var value='';
+
+    for(var attr in time){
+        if(new RegExp('('+attr+')').test(fmt)){
+            result=RegExp.$1;
+            value=time[attr]+'';
+            value=result.length==1?value:zeroFill(value,result.length-value.length);
+
+            if(adjustFmt&&(+value)===0){
+                var reg=new RegExp(attr+'([^a-zA-Z]+)[a-zA-Z]+');
+                var replaceStr=fmt.match(reg)[1];
+
+                fmt=fmt.replace(replaceStr,'');
+                value='';
+            }
+
+            fmt=fmt.replace(result,value);
+        }
+    }
+
+    return fmt;
+};
+
 //日期格式化函数
 //oDate（时间戳或字符串日期都支持）
 //fmt（格式匹配）
 //月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，
 //年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字)
-//例子：
-//dateFormat0(new Date(),'yyyy-MM-dd hh:mm:ss.S')，2018-12-21 17:24:33.664
-//dateFormat0(new Date(),'y-M-d h:m:s.S/q')，2018-12-21 17:24:33.666/4
+/*
+    例子：
+    dateFormat0(new Date(),'yyyy-MM-dd hh:mm:ss.S'); //2018-12-21 17:24:33.664
+    dateFormat0(new Date(),'y-M-d h:m:s.S/q'); //2018-12-21 17:24:33.666/4
+*/
 function dateFormat0(oDate,fmt){
     var fmt=fmt||'yyyy/MM/dd hh:mm:ss';
     var oDate=normalDate(oDate||new Date());
