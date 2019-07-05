@@ -1131,10 +1131,10 @@ function getSexAndDob(identity){
 //年(y)、月(M)、日(d)、小时(h)、分(m)、秒(s)，都可以用1到任意位占位符
 /*
     例子：
-    secondFormat(86400*365+86400*30+86400+3600+60+1,'yy/MM/dd hh:mm:ss'); //01/01/01 01:01:01
-    secondFormat(86400+3600+60+1,'hh:mm:ss'); //25:01:01
+    secondFormat0(86400*365+86400*30+86400+3600+60+1,'yy/MM/dd hh:mm:ss'); //01/01/01 01:01:01
+    secondFormat0(86400+3600+60+1,'hh:mm:ss'); //25:01:01
 */
-function secondFormat(seconds,fmt,adjustFmt){
+function secondFormat0(seconds,fmt,adjustFmt){
     var fmt=fmt||'yy/MM/dd hh:mm:ss';
     var aMinute=60;
     var aHour=aMinute*60;
