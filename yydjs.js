@@ -1157,7 +1157,7 @@ function secondFormat0(seconds,fmt,adjustFmt){
     var iMinutes=Math.floor(dMinutes/aMinute);
     var dSeconds=dMinutes-iMinutes*aMinute?dMinutes-iMinutes*aMinute:0;
     dSeconds=~fmt.indexOf('m')?dSeconds:seconds;
-    var iSeconds=dSeconds;
+    var iSeconds=Math.floor(dSeconds);
 
     var time={
         'y+':iYears,
@@ -1178,10 +1178,12 @@ function secondFormat0(seconds,fmt,adjustFmt){
 
             if(adjustFmt&&(+value)===0){
                 var reg=new RegExp(attr+'([^a-zA-Z]+)[a-zA-Z]+');
-                var replaceStr=fmt.match(reg)[1];
+                var matchStr=fmt.match(reg);
 
-                fmt=fmt.replace(replaceStr,'');
-                value='';
+                if(matchStr){
+                    fmt=fmt.replace(matchStr[1],'');
+                    value='';
+                }
             }
 
             fmt=fmt.replace(result,value);
