@@ -2551,6 +2551,7 @@ function axiosWrap(config){
                 }else{
                     alerts('网络异常'+res.status);
                     changeRefresh(true,res.status);
+                    changeLoading(false);
                     if(reject&&(Type(reject)=='function')){
                         return reject(res);
                     }else{
@@ -2559,6 +2560,7 @@ function axiosWrap(config){
                 }
             }).catch(function(error){
                 console.log(error);
+                changeLoading(false);
                 if(error.response){
                     alerts('网络异常');
                     changeRefresh(true,error.response.status);
@@ -3088,32 +3090,6 @@ function decodeURIBase64Des(obj,key,iv){
     return obj;
 };
 
-//根据设备宽度来写相对布局,
-//最小1rem=100px(宽度为375px屏幕下),3.75rem=100%;
-//根据375屏幕下换算来布局
-//小于375屏幕根节点字体大小与375屏幕保持一致，注意宽度的溢出
-function htmlFontSize(getFontSize){
-    function change(){
-        var oHtml=document.documentElement;
-        var fontSize=oHtml.clientWidth/3.75;
-
-        if(fontSize<100)fontSize=100;
-        if(fontSize>208)fontSize=208;
-        if(!getFontSize){
-            oHtml.style.fontSize=fontSize+'px';
-        }else{
-            return fontSize;
-        }
-    };
-
-    if(!getFontSize){
-        change();
-        window.onresize=change;
-    }else{
-        return change();
-    }
-};
-
 //根据屏幕大小设置根节点字体大小
 //getFontSize（是否返回根节点fontSize大小）
 //basic（基准值）
@@ -3133,7 +3109,7 @@ function htmlFontSize(getFontSize){
         "selectorBlackList": [] //如需把css选择器加入黑名单，请在数组中加入对应的前缀，比如"mint-"
     }
 */
-function htmlFontSize1(getFontSize,basic,maxScale){
+function htmlFontSize(getFontSize,basic,maxScale){
     var getFontSize=getFontSize||false;
     var basic=basic||100;
     var maxScale=maxScale||1.5;
