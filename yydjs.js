@@ -3108,6 +3108,26 @@ function decodeURIBase64Des(obj,key,iv){
         "propList": ["*"], // 如需开启pxToRem模式，请在数组中加入"*"
         "selectorBlackList": [] //如需把css选择器加入黑名单，请在数组中加入对应的前缀，比如"mint-"
     }
+
+    或者修改webpack.dev.conf.js和webpack.prod.conf.js
+    test: /\.(css|scss|less)$/,
+    use:[
+        {
+            options:{
+                plugins:()=>[
+                    require('postcss-pxtorem')({
+                        "rootValue": 100,
+                        "minPixelValue": 2, //如px小于这个值，就不会转换了
+                        "propList": ["*"], // 如需开启pxToRem模式，请在数组中加入"*"
+                        "selectorBlackList": [] //如需把css选择器加入黑名单，请在数组中加入对应的前缀，比如"mint-"
+                    }),
+                ],
+            },
+        },
+        {
+            loader: require.resolve('sass-loader'),
+        },
+    ],
 */
 function htmlFontSize(getFontSize,basic,maxScale){
     var getFontSize=getFontSize||false;
