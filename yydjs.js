@@ -1079,25 +1079,17 @@ function getWeekName(oDate,str){
 
 //根据出生日期获取年龄
 function getAge(date,real){
-    var diff=(new Date()-normalDate(date))/(1000*60*60*24*365);
-    var age=diff>0?(real?diff:Math.floor(diff)):0;
-
-    return age;
-};
-
-//根据出生日期获取年龄1
-function getAge1(date,real){
-    var oDate=normalDate(date);
-    var oYear=oDate.getFullYear();
-    var oMonth=oDate.getMonth();
-    var oDay=oDate.getDate();
+    var bDate=normalDate(date);
+    var bYear=bDate.getFullYear();
+    var bMonth=bDate.getMonth();
+    var bDay=bDate.getDate();
     var nDate=new Date();
     var nYear=nDate.getFullYear();
     var nMonth=nDate.getMonth();
     var nDay=nDate.getDate();
-    var dYear=nYear-oYear;
-    var dMonth=(nMonth-oMonth)/12;
-    var dDay=(nDay-oDay)/365;
+    var dYear=nYear-bYear;
+    var dMonth=(nMonth-bMonth)/12;
+    var dDay=(nDay-bDay)/365;
     var diff=dYear+dMonth+dDay;
     var age=diff>0?(real?diff:Math.floor(diff)):0;
 
@@ -1122,6 +1114,132 @@ function getSexAndDob(identity){
     }
 
     return sexAndDob;
+};
+
+//身份证号码校验、获取身份证信息以及计算最后一位校验码、转换15位身份证为18位
+/*
+    校验码计算
+    1、十七位数字本体码加权求和公式
+    S = Sum(Ai * Wi), i = 0, ... , 16 ，先对前17位数字的权求和
+    Ai：表示第i位置上的身份证号码数字值
+    Wi：表示第i位置上的加权因子
+    7 9 10 5 8 4 2 1 6 3 7 9 10 5 8 4 2
+
+    2、计算模
+    Y = mod(S, 11)
+
+    3、通过模得到对应的校验码
+    Y： 0 1 2 3 4 5 6 7 8 9 10
+    校验码： 1 0 X 9 8 7 6 5 4 3 2
+    也就是说，如果得到余数为1则最后的校验位p应该为对应的0。
+
+    15位的号码：
+    a a b b c c y y m m d d x x s
+    18位的号码：
+    a a b b c c y y y y m m d d x x s p
+*/
+var idCardNo={
+    citys:{11:'北京',12:'天津',13:'河北',14:'山西',15:'内蒙古',21:'辽宁',22:'吉林',23:'黑龙江',31:'上海',32:'江苏',33:'浙江',34:'安徽',35:'福建',36:'江西',37:'山东',41:'河南',42:'湖北',43:'湖南',44:'广东',45:'广西',46:'海南',50:'重庆',51:'四川',52:'贵州',53:'云南',54:'西藏',61:'陕西',62:'甘肃',63:'青海',64:'宁夏',65:'新疆',71:'台湾',81:'香港',82:'澳门',91:'国外'},//省,直辖市代码
+    powers:['7','9','10','5','8','4','2','1','6','3','7','9','10','5','8','4','2'],//每位加权因子
+    lastCodes:['1','0','X','9','8','7','6','5','4','3','2'],//第18位校检码
+    normalIdCardNo:function(idCardNo){//格式化15身份证号码为18位
+        var id17=idCardNo.substring(0,6)+'19'+idCardNo.substring(6);
+
+        return idCardNo.length==15?id17+this.getLastCode(id17):idCardNo;
+    },
+    getLastCode:function(idCardNo){//根据身份证前17位计算出最后一位校检码
+        var idCardNo=this.normalIdCardNo(idCardNo);
+        var id17=idCardNo.substring(0,17);
+        var sum=0;
+        var codeIndex=0;
+
+        for(var i=0;i<17;i++){
+            sum+=id17.charAt(i)*this.powers[i];
+        }
+
+        codeIndex=sum%11;
+
+        return this.lastCodes[codeIndex];
+    },
+    getIdCardNoInfo:function(idCardNo){//获取身份证信息
+        var idCardNo=this.normalIdCardNo(idCardNo);
+        var cityCode=idCardNo.substring(0,2);
+        var dobCode=idCardNo.substring(6,14);
+        var sexCode=idCardNo.substring(idCardNo.length-2,idCardNo.length-1);
+        var bYear=dobCode.substring(0,4);
+        var bMonth=dobCode.substring(4,6);
+        var bDay=dobCode.substring(6);
+        var bDate=new Date(bYear,bMonth-1,bDay);
+        var dob=dateFormat0(bDate,'yyyy-MM-dd');
+        var ageCode=getAge(dob)+'';
+        var idCardNoInfo={
+            city:this.citys[cityCode],
+            dob:dob,
+            sex:sexCode&1==1?'男':'女',
+            age:getAge(dob)+'岁',
+            cityCode:cityCode,
+            dobCode:dobCode,
+            sexCode:sexCode,
+            ageCode:ageCode,
+        };
+
+        return this.checkIdCardNo(idCardNo)?idCardNoInfo:this.getIdCardNoCheckInfo(idCardNo);
+    },
+    checkAddressCode:function(idCardNo){//检查地址码
+        var idCardNo=this.normalIdCardNo(idCardNo);
+        var addressCode=idCardNo.substring(0,6);
+        var reg=/[1-8]\d{5}/;
+
+        return reg.test(addressCode)&&this.citys[addressCode.substring(0,2)]?true:false;
+    },
+    checkDobCode:function(idCardNo){//检查日期码
+        var idCardNo=this.normalIdCardNo(idCardNo);
+        var dobCode=idCardNo.substring(6,14);
+        var reg=/[1-9]\d{3}(0[1-9]|1[0-2])(0[1-9]|[1-2]\d|3[0-1])/;
+        var oDate=new Date();
+        var bYear=dobCode.substring(0,4);
+        var bMonth=dobCode.substring(4,6);
+        var bDay=dobCode.substring(6);
+        var bDate=new Date(bYear,bMonth-1,bDay);
+        var cYear=bDate.getFullYear();
+        var cMonth=bDate.getMonth()+1;
+        var cDay=bDate.getDate();
+
+        return reg.test(dobCode)&&bDate<=oDate&&cYear==bYear&&cMonth==bMonth&&cDay==bDay?true:false;
+    },
+    checkLastCode:function(idCardNo){//检查身份证最后一位校验码
+        var idCardNo=this.normalIdCardNo(idCardNo);
+        var lastCode=idCardNo.charAt(idCardNo.length-1);
+
+        return lastCode==this.getLastCode(idCardNo)?true:false;
+    },
+    getIdCardNoCheckInfo:function(idCardNo){//获取身份证号码校验信息
+        var idCardNo=this.normalIdCardNo(idCardNo);
+        var checkResult=[
+            this.checkAddressCode(idCardNo),
+            this.checkDobCode(idCardNo),
+            this.checkLastCode(idCardNo),
+        ];
+        var posIndex=checkResult.indexOf(false);
+        var result=~posIndex?posIndex:true;
+        var msgJson={
+            '-1':'身份证号码校验通过',
+            '0':'地址码校验不通过',
+            '1':'日期码校验不通过',
+            '2':'最后一位校验码校验不通过',
+        };
+
+        return {
+            pass:result===true,
+            code:posIndex,
+            msg:msgJson[posIndex],
+        };
+    },
+    checkIdCardNo:function(idCardNo){//检查身份证号码
+        var result=this.getIdCardNoCheckInfo(idCardNo);
+
+        return result.pass;
+    },
 };
 
 //时间格式化函数（根据秒数来格式化）
