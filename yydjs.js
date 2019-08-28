@@ -686,7 +686,7 @@ var cookie={
         result=result?decodeURIComponent(result[3]):'';
 
         try{
-            result=JSON.parse(result);
+            result=Type(+result)=='number'?result:JSON.parse(result);
         }catch(e){}
 
         return result;
@@ -736,16 +736,14 @@ var cookie={
     },
 };
 
-//创建Store对象
+//创建Store对象(增强localStorage或sessionStorage，直接存取对象或者数组)
 var Store=function(){
     this.name='Store';
 };
 
 Store.prototype={
-    init:function(options){
-        this.store=function(){
-            return options.type;
-        };
+    init:function(type){
+        this.store=window[type];
         return this;
     },
     set:function(key,value){
@@ -754,51 +752,49 @@ Store.prototype={
         switch(type){
             case 'object':
             case 'array':
-                    this.store().setItem(key,JSON.stringify(value));
+                    this.store.setItem(key,JSON.stringify(value));
                 break;
             default :
-                    this.store().setItem(key,value);
+                    this.store.setItem(key,value);
         }
 
     },
     get:function(key){
-        var value=this.store().getItem(key);
+        var value=this.store.getItem(key);
 
         try{
-            value=JSON.parse(value);
+            value=Type(+value)=='number'?value:JSON.parse(value);
         }catch(e){}
 
         return value;
     },
     getAll:function(){
+        var store=copyJson(this.store);
         var json={};
         var value='';
 
-        for(var attr in this.store()){
+        for(var attr in store){
             try{
-                value=JSON.parse(this.store()[attr]);
+                value=store[attr];
+                value=Type(+value)=='number'?value:JSON.parse(value);
             }catch(e){}
             json[attr]=value;
         }
         return  json;
     },
     remove:function(key){
-        this.store().removeItem(key);
+        this.store.removeItem(key);
     },
     clear:function(){
-        this.store().clear();
+        this.store.clear();
     },
 };
 
 //localStorage操作
-var lStore=new Store().init({
-    'type':window.localStorage,
-});
+var lStore=new Store().init('localStorage');
 
 //sessionStorage操作
-var sStore=new Store().init({
-    'type':window.sessionStorage,
-});
+var sStore=new Store().init('sessionStorage');
 
 /*
     1.4、增强函数
