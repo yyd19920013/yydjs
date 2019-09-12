@@ -4145,10 +4145,51 @@ function pullReload(){
     1.10、跨域解决方案
 */
 
+/*
+    服务端入手
+    1、 跨域资源共享（CORS）
+    2、 通过jsonp跨域
+    3、 nodejs中间件代理跨域
+    4、 nginx代理跨域
+    5、 WebSocket协议跨域
+
+    前端入手
+    6、 document.domain + iframe跨域
+    7、 window.name + iframe跨域
+    8、 location.hash + iframe
+    9、 postMessage跨域
+*/
+
+//跨域解决方案之document.domain + iframe跨域
+//思路：两个页面都通过js强制设置document.domain为基础主域，就实现了同域。
+//方案：两个页面都通过js强制设置document.domain为基础主域
+//缺点：此方案仅限主域相同，子域不同的跨域应用场景。
+//url（要跨域的地址）
+//domain（基础主域）
+//endFn（回调函数，回参为跨域页面的iframe）
+//showIframe（是否显示被嵌套页面）
+/*
+    documentDomainCrossDomain('http://yangyd.cn/test/','yyd.com',function(iframe){
+        console.log(iframe.contentWindow.location);
+    });
+*/
+function documentDomainCrossDomain(url,domain,endFn,showIframe){
+    var oIframe=document.createElement('iframe');
+
+    document.domain=domain;
+    oIframe.src=url;
+    oIframe.style.display=showIframe?'block':'none';
+    oIframe.onload=function(){
+        endFn&&endFn(oIframe);
+    };
+
+    document.body.appendChild(oIframe);
+};
+
 //跨域解决方案之window.name + iframe跨域
 //思路：window.name属性的独特之处：name值在不同的页面（甚至不同域名）加载后依旧存在，并且可以支持非常长的 name 值（2MB）。
 //方案：第一次让iframe加载跨域页面，保存window.name，然后再让iframe加载同域页面获取window.name
-//缺点：无法监听收发消息
+//缺点：只能单次收发数据
 //url（要跨域的地址）
 //endFn（回调函数，回参为跨域页面返回的data数据）
 /*
@@ -4179,7 +4220,7 @@ function windowNameCrossDomain(url,endFn){
 //跨域解决方案之location.hash + iframe跨域
 //思路：a欲与b跨域相互通信，通过中间页c来实现。 三个页面，不同域之间利用iframe的location.hash传值，相同域之间直接js访问来通信。
 //方案：需要一个同域的代理页面，代理页面监听hashchange事件，通过window.top调用获取数据页面的回调方法传入hash里的数据，跨域页面通过改变代理页面的hash值传数据
-//缺点：只能单向发数据
+//缺点：只能单向收发数据
 /*
     A域：需要获取数据的页面
     var hashChangeCrossDomain=new hashChangeCrossDomain();
