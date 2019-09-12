@@ -12,7 +12,8 @@
         1.7、浏览器相关
         1.8、网络请求
         1.9、项目中使用
-        1.10、自我拓展
+        1.10、跨域解决方案
+        1.99、自我拓展
     2、常用插件
         2.1、运动框架
         2.2、轮播相关
@@ -4141,7 +4142,252 @@ function pullReload(){
 };
 
 /*
-    1.10、自我拓展
+    1.10、跨域解决方案
+*/
+
+//跨域解决方案之window.name + iframe跨域
+//思路：window.name属性的独特之处：name值在不同的页面（甚至不同域名）加载后依旧存在，并且可以支持非常长的 name 值（2MB）。
+//方案：第一次让iframe加载跨域页面，保存window.name，然后再让iframe加载同域页面获取window.name
+//缺点：无法监听收发消息
+//url（要跨域的地址）
+//endFn（回调函数，回参为跨域页面返回的data数据）
+/*
+    windowNameCrossDomain('http://yangyd.cn/test/',function(data){
+        console.log(data);//This is domain2 data!
+    });
+*/
+function windowNameCrossDomain(url,endFn){
+    var crossUrlLoaded=false;
+    var oIframe=document.createElement('iframe');
+
+    oIframe.src=url;
+    oIframe.style.display='none';
+    oIframe.onload=function(){
+        if(!crossUrlLoaded){
+            crossUrlLoaded=true;
+            oIframe.contentWindow.location.href='/crossDomainProxy.html';//不存在该html时会报错404，但是不影响，如果不想报错，就建一个对应名字的空页面
+        }else{
+            endFn&&endFn(oIframe.contentWindow.name);
+            oIframe.contentWindow.document.write('');
+            document.body.removeChild(oIframe);
+        }
+    };
+
+    document.body.appendChild(oIframe);
+};
+
+//跨域解决方案之location.hash + iframe跨域
+//思路：a欲与b跨域相互通信，通过中间页c来实现。 三个页面，不同域之间利用iframe的location.hash传值，相同域之间直接js访问来通信。
+//方案：需要一个同域的代理页面，代理页面监听hashchange事件，通过window.top调用获取数据页面的回调方法传入hash里的数据，跨域页面通过改变代理页面的hash值传数据
+//缺点：只能单向发数据
+/*
+    A域：需要获取数据的页面
+    var hashChangeCrossDomain=new hashChangeCrossDomain();
+
+    hashChangeCrossDomain.on('http://yangyd.cn/test',function(data){
+        console.log(window.location.href,'收到',data);
+    });
+
+    A域：代理监听hash变化的页面
+    var hashChangeCrossDomain=new hashChangeCrossDomain();
+
+    hashChangeCrossDomain.watch();
+
+    B域：需要跨域发送数据的页面
+    var hashChangeCrossDomain=new hashChangeCrossDomain();
+
+    hashChangeCrossDomain.emit('http://yyd.com/proxy.html','发送数据给http://yyd.com')
+*/
+function hashChangeCrossDomain(){
+    this.name='hashChangeCrossDomain';
+};
+
+hashChangeCrossDomain.prototype={
+    init:function(showIframe){
+        this.showIframe=showIframe?'block':'none';
+
+        return this;
+    },
+    createIframe:function(url){
+        if(!url)return this;
+        var oIframe=document.createElement('iframe');
+
+        oIframe.style.display=this.showIframe;
+        oIframe.src=url;
+
+        return oIframe;
+    },
+    getSearch:function(key,str){
+        var reg=new RegExp('(^|&|\\?)'+key+'=([^&]+)(&|$)');
+        var str=str||window.location.search;
+        var matchStr=str.match(reg);
+
+        return matchStr&&matchStr[2]||null;
+    },
+    watch:function(){
+        var This=this;
+
+        window.onhashchange=function(){
+            var hash=window.location.hash;
+            var posIndex=hash.indexOf('?');
+
+            if(~posIndex){
+                var str=hash.substring(posIndex);
+                var hashData=This.getSearch('hashData',str);
+
+                hashData=decodeURIComponent(hashData);
+                try{
+                    hashData=JSON.parse(hashData);
+                }catch(e){}
+
+                window.top.hashChangeCrossDomainFn&&window.top.hashChangeCrossDomainFn(hashData);
+            }
+        };
+
+        return this;
+    },
+    on:function(url,endFn){//url为跨域页面的url，endFn为回调函数，回参为跨域页面发送的数据
+        if(!this.onIframe){
+            this.onIframe=this.createIframe(url);
+        }
+
+        window.hashChangeCrossDomainFn=endFn;
+        document.body.appendChild(this.onIframe);
+
+        return this;
+    },
+    emit:function(url,data){//url为同域代理页面的url，data为跨域页面要发送的数据
+        var This=this;
+        var data=data||'';
+
+        if(!This.emitIframe){
+            This.emitIframe=This.createIframe(url);
+            This.emitIframe.style.display='none';
+        }
+
+        function emitFn(exec){
+            if(!exec&&This.emitIframe.loaded)return;
+            var hash='#'+(url.split('#')[1]||'');
+            var posIndex1=hash.indexOf('?');
+            var posIndex2=hash.indexOf('=');
+            var resultHash='';
+
+            if(!~posIndex1){
+                hash+='?';
+            }
+            if(~posIndex2){
+                hash+='&';
+            }
+
+            This.emitIframe.loaded=true;
+            hash+='hashData='+encodeURIComponent(JSON.stringify(data));
+            This.emitIframe.src=url+hash;
+        };
+
+        if(This.emitIframe.loaded){
+            emitFn(true);
+        }else{
+            This.emitIframe.onload=function(){
+                emitFn(false);
+            };
+            document.body.appendChild(This.emitIframe);
+        }
+
+        return this;
+    },
+};
+
+//跨域解决方案之postMessage跨域
+/*
+    思路：postMessage是HTML5 XMLHttpRequest Level 2中的API，且是为数不多可以跨域操作的window属性之一，它可用于解决以下方面的问题：
+    a.） 页面和其打开的新窗口的数据传递
+    b.） 多窗口之间消息传递
+    c.） 页面与嵌套的iframe消息传递
+    d.） 上面三个场景的跨域数据传递
+*/
+//方案：主页面嵌套跨域的页面，给被嵌套页面发消息可以通过iframe.contentWindow.postMessage，被嵌套页面给主页面发消息可以通过window.top.postMessage
+//缺点：可能不兼容
+/*
+    主页面
+    var postMessageCrossDomain=new postMessageCrossDomain().init(true);
+
+    postMessageCrossDomain.on(function(data){
+        console.log(window.location.href,'收到',data);
+    });
+    postMessageCrossDomain.emit('child','http://yangyd.cn/test/','父页面通过postMessage跨域发送数据');
+
+    跨域的页面
+    var postMessageCrossDomain=new postMessageCrossDomain().init(true);
+
+    postMessageCrossDomain.on(function(data){
+        console.log(window.location.href,'收到',data);
+    });
+    postMessageCrossDomain.emit('parent','http://yyd.com/','子页面通过postMessage跨域发送数据');
+*/
+function postMessageCrossDomain(){
+    this.name='postMessageCrossDomain';
+};
+
+postMessageCrossDomain.prototype={
+    init:function(showIframe){
+        this.showIframe=showIframe?'block':'none';
+
+        return this;
+    },
+    createIframe:function(url){
+        if(!url)return this;
+        var oIframe=document.createElement('iframe');
+
+        oIframe.style.display=this.showIframe;
+        oIframe.src=url;
+
+        return oIframe;
+    },
+    on:function(endFn){//endFn为回调函数，回参为跨域页面发送的数据
+        window.addEventListener('message',function(ev){
+            var data=ev.data;
+
+            try{
+                data=JSON.parse(data);
+            }catch(e){}
+
+            endFn&&endFn(data);
+        },false);
+
+        return this;
+    },
+    emit:function(name,url,data){//url跨域页面的url，data为跨域页面要发送的数据
+        var This=this;
+        var data=data||'';
+
+        if(!This.emitIframe){
+            This.emitIframe=This.createIframe(url);
+        }
+
+        if(name=='parent'){
+            window.top.postMessage(JSON.stringify(data),url);
+        }else{
+            function emitFn(exec){
+                if(!exec&&This.emitIframe.loaded)return;
+                This.emitIframe.contentWindow.postMessage(JSON.stringify(data),url);
+            };
+
+            if(This.emitIframe.loaded){
+                emitFn(true);
+            }else{
+                This.emitIframe.onload=function(){
+                    emitFn(false);
+                };
+                document.body.appendChild(This.emitIframe);
+            }
+        }
+
+        return this;
+    },
+};
+
+/*
+    1.99、自我拓展
 */
 
 //根据数据模板创建元素(防止xss攻击)
