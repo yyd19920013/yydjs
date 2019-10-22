@@ -259,6 +259,81 @@ function watchObjectPZ(class1, class2, endFn) {
     }, 1000 / 60);
 };
 
+//选择器方式的碰撞检测
+var collisionDetection = {
+    set: function (domList) { //设置以备检测列表的样式以及信息，父级需设置宽高，参数(元素列表)
+        var domList = domList.length ? domList : [domList];
+
+        for (var i = 0; i < domList.length; i++) {
+            var obj = domList[i];
+            var width = obj.offsetWidth;
+            var height = obj.offsetHeight;
+            var left = obj.offsetLeft;
+            var right = left + width;
+            var top = obj.offsetTop;
+            var bottom = top + height;
+            var dataInfo = {
+                name: obj.className,
+                width: width,
+                height: height,
+                left: left,
+                top: top,
+            };
+
+            obj.style.left = left + 'px';
+            obj.style.top = top + 'px';
+            obj.setAttribute('dataInfo', encodeURIComponent(JSON.stringify(dataInfo)));
+        }
+        for (var i = 0; i < obj.length; i++) {
+            var obj = obj[i];
+
+            obj.style.position = 'absolute';
+        }
+
+        return this;
+    },
+    get: function (self, other) { //获取当前元素碰撞到的元素列表，参数(当前元素,需检测元素的模板元素)
+        var otherDataInfo = JSON.parse(decodeURIComponent(other.getAttribute('dataInfo')) || '') || {};
+        var otherWidth = otherDataInfo.width;
+        var otherHeight = otherDataInfo.height;
+        var selfDataInfo = JSON.parse(decodeURIComponent(self.getAttribute('dataInfo')) || '') || {};
+        var selfWidth = selfDataInfo.width;
+        var selfHeight = selfDataInfo.height;
+        var selfLeft = selfDataInfo.left;
+        var selfTop = selfDataInfo.top;
+        var minLeftIndex = -1;
+        var maxLeftIndex = -1;
+        var minTopIndex = -1;
+        var maxTopIndex = -1;
+        var seletorInfo = {
+            name: 'floor',
+            width: otherWidth,
+            height: otherHeight,
+        };
+        var seletorArr = [];
+
+        minLeftIndex = Math.floor(selfLeft / otherWidth);
+        maxLeftIndex = Math.floor((selfLeft + selfWidth) / otherWidth);
+        minTopIndex = Math.floor(selfTop / otherHeight);
+        maxTopIndex = Math.floor((selfTop + selfHeight) / otherHeight);
+
+        if (~minLeftIndex && ~maxLeftIndex && ~minTopIndex && ~maxTopIndex) {
+            for (var i = minLeftIndex; i <= maxLeftIndex; i++) {
+                for (var j = minTopIndex; j <= maxTopIndex; j++) {
+                    seletorInfo.left = i * otherWidth;
+                    seletorInfo.top = j * otherHeight;
+                    seletorArr.push(`[dataInfo="${encodeURIComponent(JSON.stringify(seletorInfo))}"]`);
+                }
+            }
+        }
+
+        var seletor = seletorArr.join(',');
+        var seletDom = QSA(seletor);
+
+        return seletDom;
+    },
+};
+
 //用js修改样式表
 //linkHref（样式表完整名称）
 //className(想要修改的选择器完整名称)
@@ -512,13 +587,15 @@ var customEvent = {
 };
 
 //兼容手机和pc端的拖拽事件方法(该方法不进行拖拽，只封装事件)
-//option{
-//obj:obj,//被拖拽的对象
-//start:function(position,ev){},//拖拽开始的函数
-//move:function(position,ev){},//拖拽中的函数
-//end:function(position,ev){},//拖拽结束的函数
-//preventDefault:true,//是否阻止系统默认拖拽事件
-//}
+/*
+    option {
+        obj: obj, //被拖拽的对象
+        start: function (position, ev) {}, //拖拽开始的函数
+        move: function (position, ev) {}, //拖拽中的函数
+        end: function (position, ev) {}, //拖拽结束的函数
+        preventDefault: true, //是否阻止系统默认拖拽事件
+    }
+*/
 function onDrag(option) {
     var obj = option.obj;
     var start = option.start;
@@ -2647,7 +2724,7 @@ function axiosWrap(config) {
     function createAxios(config) {
         var url = (hostname == 'localhost' || hostname == '127.0.0.1' || hostname == '172.16.21.92') ? (config.url ? config.url : '/api') : '/';
         var method = config.method ? config.method.toLowerCase() : '';
-        var paramsOrData = method == 'get' || method == 'delete' ? 'params' : 'data';
+        var paramsOrData = method == 'get' || method == 'delete' || config.urlJointParams ? 'params' : 'data';
         var configResult = {
             url: url,
             method: method,
@@ -4815,29 +4892,31 @@ function css(obj, attr, value) {
 
 //兼容css3样式
 function setCss3(obj, attr, value) {
-    var str = '';
     var val = '';
     var arr = ['Webkit', 'Moz', 'O', 'ms', ''];
     if (!obj['$Transform']) {
         obj['$Transform'] = {};
     }
-    obj['$Transform'][attr] = parseInt(value);
-    for (str in obj['$Transform']) {
-        switch (str) {
+    obj['$Transform'][attr] = Type(value) == 'number' ? parseInt(value) : value;
+    for (var currentAttr in obj['$Transform']) {
+        switch (currentAttr) {
             case 'scale':
             case 'scaleX':
             case 'scaleY':
-                val += str + '(' + (obj['$Transform'][str] / 100) + ')';
+                val += currentAttr + '(' + (obj['$Transform'][currentAttr] / 100) + ')';
                 break;
             case 'rotate':
             case 'rotateX':
             case 'rotateY':
-                val += str + '(' + (obj['$Transform'][str]) + 'deg)';
+                val += currentAttr + '(' + (obj['$Transform'][currentAttr]) + 'deg)';
+                break;
+            case 'translate3d':
+                val += currentAttr + '(' + (obj['$Transform'][currentAttr]) + ')';
                 break;
             case 'translateX':
             case 'translateY':
             case 'translateZ':
-                val += str + '(' + (obj['$Transform'][str]) + 'px)';
+                val += currentAttr + '(' + (obj['$Transform'][currentAttr]) + 'px)';
                 break;
         }
     }
