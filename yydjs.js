@@ -1314,8 +1314,10 @@ var idCardNo = {
         return lastCode == this.getLastCode(idCardNo) ? true : false;
     },
     getIdCardNoCheckInfo: function (idCardNo) { //获取身份证号码校验信息
+        var regTestResult = /^[1-8]\d{5}[1-9]\d{3}(0[1-9]|1[0-2])(0[1-9]|[1-2]\d|3[0-1])\d{3}[\dxX]$/.test(idCardNo);
         var idCardNo = this.normalIdCardNo(idCardNo);
         var checkResult = [
+            regTestResult,
             this.checkAddressCode(idCardNo),
             this.checkDobCode(idCardNo),
             this.checkLastCode(idCardNo),
@@ -1324,9 +1326,10 @@ var idCardNo = {
         var result = ~posIndex ? posIndex : true;
         var msgJson = {
             '-1': '身份证号码校验通过',
-            '0': '地址码校验不通过',
-            '1': '日期码校验不通过',
-            '2': '最后一位校验码校验不通过',
+            '0': '身份证号码格式校验不通过',
+            '1': '地址码校验不通过',
+            '2': '日期码校验不通过',
+            '3': '最后一位校验码校验不通过',
         };
 
         return {
