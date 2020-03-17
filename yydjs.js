@@ -930,9 +930,9 @@ var sStore = new Store().init('sessionStorage');
     1.4、增强函数
 */
 
-//判断数据类型的方法（对typeof的增强，8种常用类型的判断，返回小写字符串）
+//判断数据类型的方法（对typeof的增强，9种常用类型的判断，返回小写字符串）
 function Type(obj) {
-    var arr = ['null', 'undefined', 'nan', 'function', 'number', 'string', 'array', 'object'];
+    var arr = ['null', 'undefined', 'number', 'string', 'boolean', 'nan', 'array', 'object', 'function'];
     if (obj === null) {
         return 'null';
     }
@@ -951,13 +951,19 @@ function Type(obj) {
     return (typeof obj).toLowerCase();
 };
 
-//判断数据类型的方法（对typeof的增强，9种类型的判断，返回小写字符串）
+//判断数据类型的方法（对typeof的增强，11种类型的判断，返回小写字符串）
 function Type1(obj) {
-    var arr = ['null', 'nan', 'function', 'number', 'string', 'array', 'object', 'date', 'regexp'];
+    var arr = ['null', 'undefined', 'number', 'string', 'boolean', 'nan', 'array', 'object', 'function', 'date', 'regexp'];
     var t, c, n;
 
     if (obj === null) {
         return 'null';
+    }
+    if (obj === undefined) {
+        return 'undefined';
+    }
+    if (obj === false || obj === true) {
+        return 'boolean';
     }
     if (obj !== obj) {
         return 'nan';
