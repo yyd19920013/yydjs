@@ -115,7 +115,16 @@ function lastChild(obj) {
     return obj.lastElementChild || obj.lastChild;
 };
 
-function Scroll(obj, position, dis) {
+//在指定的误差范围内，使用 Number.EPSILON 来比较两个数字是否相等
+function numbersCloseEnoughToEqual(n1, n2) {
+    if (!Number.EPSILON) {
+        Number.EPSILON = Math.pow(2, -52);
+    }
+    return Math.abs(n1 - n2) < Number.EPSILON;
+}
+
+//滚动到指定位置
+function scroll(obj, position, dis) {
     var position = 'scroll' + position.toLowerCase().replace(/^[a-z]{1}/, position.charAt(0).toUpperCase());
 
     if (obj === document || obj === document.body) {
@@ -535,6 +544,25 @@ function soleString32() {
     });
     resultStr = resultStr.join('');
     return resultStr;
+};
+
+//生成添加boundary的字符串，用于小程序wx.request发送multipart/form-data请求的方法
+function boundaryString(json) {
+    var id = soleString32();
+    var result = { id: id };
+    var data = '';
+
+    function createStr(key, value) {
+        var str = '--' + id + '\r\nContent-Disposition: form-data; name="' + key + '"\r\n\r\n' + value + '\r\n';
+
+        return str;
+    };
+    for (var attr in json) {
+        data += createStr(attr, json[attr]);
+    }
+    data += '--' + id + '--';
+    result.data = data;
+    return result;
 };
 
 //自定义事件的实现（发布订阅模式）
@@ -1435,7 +1463,7 @@ function dateFormat0(oDate, fmt) {
         'm+': oDate.getMinutes(), //分
         's+': oDate.getSeconds(), //秒
         'S': oDate.getMilliseconds(), //毫秒
-        'q+': Math.ceil((oDate.getMonth() + 1) / 3), //季度，+3为了好取整
+        'q+': Math.ceil((oDate.getMonth() + 1) / 3), //季度
     };
     var result = '';
     var value = '';
@@ -1627,7 +1655,7 @@ function computed(num1, operator, num2) {
 
 //内核前缀查询
 function getPrefix() {
-    var style = document.body.style || document.documentElement.style;
+    var style = document.documentElement.style || document.body.style;
     var arr = ['webkit', 'khtml', 'moz', 'ms', 'o'];
     for (var i = 0; i < arr.length; i++) {
         if (typeof style[arr[i] + 'Transition'] == 'string') {
@@ -2073,6 +2101,26 @@ function getSearch(key, str) {
     var matchStr = str.match(reg);
 
     return matchStr && matchStr[2] || null;
+};
+
+//微信小程序-获取扫码带过来的参数
+function wxGetQRCodeParams(options) {
+    var options = options || {};
+    var url = decodeURIComponent(options.q || '');
+    var search = url.split('?')[1];
+    var scene = decodeURIComponent(options.scene || '');
+    var str = search ? search : scene;
+    var arr = str.split('&');
+    var params = {};
+
+    for (var i = 0; i < arr.length; i++) {
+        var arr1 = arr[i].split('=');
+        var key = arr1[0];
+        var value = arr1[1];
+
+        params[key] = value;
+    }
+    return Object.assign({}, options, params);
 };
 
 //存储历史路径以及获取指定路径的上一个路径
@@ -2570,7 +2618,6 @@ function ajaxWrap(config) {
 
     if (config.success || config.finally || config.error) {
         xhr.onreadystatechange = onreadystatechangeFn;
-
         return errorPromise;
     } else {
         return new Promise(function (resolve, reject) {
@@ -3243,7 +3290,7 @@ function fileType(suffix) {
     var length = typeList.length - 1;
     var suffixJson = {
         image: ['png', 'jpg', 'jpeg', 'gif', 'ico', 'bmp', 'pic', 'tif'],
-        audio: ['mp3', 'ogg', 'wav', 'acc', 'vorbis'],
+        audio: ['mp3', 'ogg', 'wav', 'acc', 'vorbis', 'silk'],
         video: ['mp4', 'webm', 'avi', 'rmvb', '3gp', 'flv'],
     };
     var resultList = [];
@@ -3476,15 +3523,19 @@ var regJson = {
         name: '数字',
         reg: /^[0-9]+\.?[0-9]*$/,
         iReg: /^[0-9]*\.?[0-9]*$/,
-        tReg: /[0-9]+\.?[0-9]+/g,
+        tReg: /[0-9\.]+/g,
     },
     aa: {
         name: '小写字母',
         reg: /^[a-z]+$/,
+        iReg: /^[a-z]*$/,
+        tReg: /[a-z]+/g,
     },
     AA: {
         nmae: '大写字母',
         reg: /^[A-Z]+$/,
+        iReg: /^[A-Z]*$/,
+        tReg: /[A-Z]+/g,
     },
     aA: {
         name: '字母',
@@ -3495,14 +3546,20 @@ var regJson = {
     aa1: {
         name: '小写字母或数字',
         reg: /^[a-z0-9]+$/,
+        iReg: /^[a-z0-9]*$/,
+        tReg: /[a-z0-9]+/g,
     },
     AA1: {
         name: '大写字母或数字',
         reg: /^[A-Z0-9]+$/,
+        iReg: /^[A-Z0-9]*$/,
+        tReg: /[A-Z0-9]+/g,
     },
     aA1: {
         name: '字母和数字',
         reg: /^\w+$/,
+        iReg: /^\w*$/,
+        tReg: /\w+/g,
     },
     zh: {
         name: '中文',
@@ -3520,32 +3577,43 @@ var regJson = {
         name: '手机号',
         reg: /^1[3-9]{1}\d{9}$/,
         iReg: /^[0-9]{0,11}$/,
+        tReg: /[0-9]+/g,
     },
     identity: {
         name: '身份证号码',
         reg: /^[1-8]\d{5}[1-9]\d{3}(0[1-9]|1[0-2])(0[1-9]|[1-2]\d|3[0-1])\d{3}[\dxX]$/,
+        iReg: /^[\dxX]{0,18}$/,
+        tReg: /[\dxX]+/g,
     },
     bankCard: {
         name: '银行卡号',
         reg: /^[0-9]{8,28}$/,
+        iReg: /^[0-9]{0,28}$/,
+        tReg: /[0-9]+/g,
     },
     user: {
         name: '用户名',
         reg: /^[\w-]{3,16}$/,
+        iReg: /^[\w-]{0,16}$/,
+        tReg: /[\w-]+/g,
     },
     password: {
         name: '密码',
         reg: /^[^\u2E80-\u9FFF\s]{6,20}$/,
         iReg: /^[^\u2E80-\u9FFF\s]{0,20}$/,
+        tReg: /[^\u2E80-\u9FFF\s]+/g,
     },
     email: {
         name: '邮箱',
         reg: /^([\w\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/,
+        iReg: /^([\w\.-]*)@([\da-z\.-]*)\.([a-z\.]{0,6})$/,
+        tReg: /[\w\.-@]+/g,
     },
     verifyCode: {
         name: '6位数字验证码',
         reg: /^[0-9]{6}$/,
         iReg: /^[0-9]{0,6}$/,
+        tReg: /[0-9]+/g,
     },
 };
 
