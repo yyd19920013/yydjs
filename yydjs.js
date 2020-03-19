@@ -45,75 +45,75 @@
 //原生常用方法封装
 function Id(id) {
     return document.getElementById(id);
-};
+}
 
 function Class(Class) {
     return document.getElementsByClassName(Class);
-};
+}
 
 function Tag(tag) {
     return document.getElementsByTagName(tag);
-};
+}
 
 function QS(Class) { //带上选择符号(包括属性)，只能选一组中的一个元素
     return document.querySelector(Class);
-};
+}
 
 function QSA(Class) { //带上选择符号(包括属性)，能选一组元素
     return document.querySelectorAll(Class);
-};
+}
 
 function Create(tag) {
     return document.createElement(tag);
-};
+}
 
 function Add(obj, obj1) {
     obj.appendChild(obj1);
-};
+}
 
 function Insert(obj, obj1, obj2) { //父元素，要插入的元素，插入元素的后一个兄弟元素
     obj.insertBefore(obj1, obj2);
-};
+}
 
 function Remove(obj, obj1) {
     obj.removeChild(obj1);
-};
+}
 
 function AddClass(obj, className) {
     obj.classList.add(className);
-};
+}
 
 function RemoveClass(obj, className) {
     obj.classList.remove(className);
-};
+}
 
 function ToggleClass(obj, className) {
     obj.classList.toggle(className);
-};
+}
 
 function HasClass(obj, className) {
     return obj.classList.contains(className);
-};
+}
 
 function parent(obj) {
     return obj.parentElement || obj.parentNode;
-};
+}
 
 function prevSibling(obj) {
     return obj.previousElementSibling || obj.previousSibling;
-};
+}
 
 function nextSibling(obj) {
     return obj.nextElementSibling || obj.nextSibling;
-};
+}
 
 function firstChild(obj) {
     return obj.firstElementChild || obj.firstChild;
-};
+}
 
 function lastChild(obj) {
     return obj.lastElementChild || obj.lastChild;
-};
+}
 
 //在指定的误差范围内，使用 Number.EPSILON 来比较两个数字是否相等
 function numbersCloseEnoughToEqual(n1, n2) {
@@ -132,12 +132,12 @@ function scroll(obj, position, dis) {
     } else {
         obj[position] = dis;
     }
-};
+}
 
 //获取对象样式
 function getStyle(obj, attr) {
     return obj.currentStyle ? obj.currentStyle[attr] : getComputedStyle(obj, false)[attr];
-};
+}
 
 //获取到document的位置
 function getPos(obj, attr) {
@@ -153,7 +153,7 @@ function getPos(obj, attr) {
         i++;
     }
     return value;
-};
+}
 
 //获取dom到document的位置和宽高集合
 function getClientRect(dom) {
@@ -184,7 +184,7 @@ function getClientRect(dom) {
     };
 
     return json.rect();
-};
+}
 
 //碰撞检测(配合定时器使用)
 function collide(obj1, obj2) {
@@ -199,7 +199,7 @@ function collide(obj1, obj2) {
     var b2 = obj2.offsetTop + obj2.offsetHeight;
 
     return r1 < l2 || l1 > r2 || b1 < t2 || t1 > b2 ? false : true;
-};
+}
 
 //实时监测两组物体碰撞并返回数据(性能良好：小于或等于2500次循环，性能上限：大于或等于10000次循环)
 //class1，一组要做碰撞检测的元素的选择器字符串
@@ -266,7 +266,7 @@ function watchObjectPZ(class1, class2, endFn) {
             endFn && endFn(data);
         }
     }, 1000 / 60);
-};
+}
 
 //选择器方式的碰撞检测
 var collisionDetection = {
@@ -298,7 +298,6 @@ var collisionDetection = {
 
             obj.style.position = 'absolute';
         }
-
         return this;
     },
     get: function (self, other) { //获取当前元素碰撞到的元素列表，参数(当前元素,需检测元素的模板元素)
@@ -374,7 +373,7 @@ function jsStyle(linkHref, className, json) {
         }
     }
     return rule.cssText;
-};
+}
 
 //重置file文件
 //obj(file文件对象)
@@ -385,7 +384,7 @@ function resetFile(obj) {
     oFrom.appendChild(obj);
     oFrom.reset();
     oParent.appendChild(obj);
-};
+}
 
 //路由切换回到顶部防闪屏（用于单页应用）
 function routerChange() {
@@ -394,7 +393,7 @@ function routerChange() {
         document.body.style.display = 'block';
         document.documentElement.scrollTop = document.body.scrollTop = 0;
     });
-};
+}
 
 //禁止与允许body滚动
 function controlBodyScroll(disableScroll, goTop) {
@@ -419,7 +418,7 @@ function controlBodyScroll(disableScroll, goTop) {
             oHtml.scrollTop = oBody.scrollTop = 0;
         });
     }
-};
+}
 
 /*
     1.2、事件相关
@@ -431,7 +430,7 @@ function cBub(ev) {
 
     if (ev.stopPropagation) ev.stopPropagation(); //标准
     ev.cancelBubble = true; //ie
-};
+}
 
 //绑定的方式阻止默认事件
 function pDef(ev) {
@@ -439,12 +438,12 @@ function pDef(ev) {
 
     if (ev.preventDefault) ev.preventDefault(); //标准
     ev.returnValue = false; //ie
-};
+}
 
 //兼容之前用到的fix函数
 function fix(ev) {
     pDef(ev);
-};
+}
 
 //绑定事件，可重复绑定('事件名称'必须加引号)
 function bind(obj, evname, fn) {
@@ -458,7 +457,7 @@ function bind(obj, evname, fn) {
             fn.call(obj);
         });
     }
-};
+}
 
 //取消绑定，可重复取消('事件名称'必须加引号)
 function unbind(obj, evname, fn) {
@@ -470,7 +469,7 @@ function unbind(obj, evname, fn) {
     } else {
         obj.detachEvent('on' + evname, fn);
     }
-};
+}
 
 //鼠标滚轮事件兼容
 function MouseWheel(obj, upFn, downFn) {
@@ -488,8 +487,8 @@ function MouseWheel(obj, upFn, downFn) {
         up ? upFn && upFn.call(obj, ev) : downFn && downFn.call(obj, ev);
 
         pDef(ev);
-    };
-};
+    }
+}
 
 //dom加载完毕执行函数
 function domLoad(fn) {
@@ -513,7 +512,7 @@ function domLoad(fn) {
         onOff && fn && fn('load');
         onOff = false;
     });
-};
+}
 
 //自动点击事件
 function autoEvent(obj, event) {
@@ -525,7 +524,7 @@ function autoEvent(obj, event) {
     } else if (document.createEventObject) {
         obj.fireEvent(event);
     }
-};
+}
 
 //生成32位唯一字符串(大小写字母数字组合)
 function soleString32() {
@@ -544,7 +543,7 @@ function soleString32() {
     });
     resultStr = resultStr.join('');
     return resultStr;
-};
+}
 
 //生成添加boundary的字符串，用于小程序wx.request发送multipart/form-data请求的方法
 function boundaryString(json) {
@@ -556,14 +555,14 @@ function boundaryString(json) {
         var str = '--' + id + '\r\nContent-Disposition: form-data; name="' + key + '"\r\n\r\n' + value + '\r\n';
 
         return str;
-    };
+    }
     for (var attr in json) {
         data += createStr(attr, json[attr]);
     }
     data += '--' + id + '--';
     result.data = data;
     return result;
-};
+}
 
 //自定义事件的实现（发布订阅模式）
 var customEvent = {
@@ -650,7 +649,8 @@ function onDrag(option) {
             position.sX = ev.changedTouches[0].clientX;
             position.sY = ev.changedTouches[0].clientY;
             start && start.call(obj, position, ev);
-        };
+        }
+
         bind(obj, 'touchmove', fn2);
 
         function fn2(ev) {
@@ -659,7 +659,8 @@ function onDrag(option) {
             position.mX = ev.changedTouches[0].clientX;
             position.mY = ev.changedTouches[0].clientY;
             move && move.call(obj, position, ev);
-        };
+        }
+
         bind(obj, 'touchend', fn3);
 
         function fn3() {
@@ -668,8 +669,8 @@ function onDrag(option) {
             position.eX = ev.changedTouches[0].clientX;
             position.eY = ev.changedTouches[0].clientY;
             end && end.call(obj, position, ev);
-        };
-    };
+        }
+    }
 
     function pc() {
         obj.onmousedown = function (ev) {
@@ -698,13 +699,13 @@ function onDrag(option) {
             };
             return false;
         };
-    };
+    }
 
     if (preventDefault) bind(obj, 'touchmove', pDef);
     document.onselectstart = function () {
         return false;
     };
-};
+}
 
 //兼容手机和电脑端的拖拽方法
 function drag(obj, lMin, lMax, tMin, tMax, sFn, mFn, endFn) {
@@ -726,7 +727,8 @@ function drag(obj, lMin, lMax, tMin, tMax, sFn, mFn, endFn) {
             disX = ev.changedTouches[0].clientX - css(obj, 'left');
             disY = ev.changedTouches[0].clientY - css(obj, 'top');
             sFn && sFn.call(obj, disX, disY);
-        };
+        }
+
         bind(obj, 'touchmove', fn2);
 
         function fn2(ev) {
@@ -741,13 +743,14 @@ function drag(obj, lMin, lMax, tMin, tMax, sFn, mFn, endFn) {
             css(obj, 'left', l + 'px');
             css(obj, 'top', t + 'px');
             mFn && mFn.call(obj, l, t);
-        };
+        }
+
         bind(obj, 'touchend', fn3);
 
         function fn3() {
             endFn && endFn.call(obj);
-        };
-    };
+        }
+    }
 
     function pc() {
         obj.onmousedown = function (ev) {
@@ -777,13 +780,13 @@ function drag(obj, lMin, lMax, tMin, tMax, sFn, mFn, endFn) {
             };
             return false;
         };
-    };
+    }
 
     bind(obj, 'touchmove', pDef);
     document.onselectstart = function () {
         return false;
     };
-};
+}
 
 /*
     1.3、cookie与storage
@@ -803,7 +806,6 @@ var cookie = {
                 value = JSON.stringify(value);
                 break;
         }
-
         oDate.setSeconds(oDate.getSeconds() + sec);
         oDate = oDate.toGMTString();
         document.cookie = key + '=' + encodeURIComponent(value) + ';expires=' + oDate;
@@ -814,11 +816,9 @@ var cookie = {
         var result = str.match(reg);
 
         result = result ? decodeURIComponent(result[3]) : '';
-
         try {
             result = Type(+result) == 'number' ? result : JSON.parse(result);
         } catch (e) {}
-
         return result;
     },
     getKeys: function () {
@@ -837,7 +837,6 @@ var cookie = {
                 str = {};
             }
         } catch (e) {}
-
         return str;
     },
     getAll: function () {
@@ -847,7 +846,6 @@ var cookie = {
         for (var attr in keys) {
             json[attr] = this.get(attr);
         }
-
         return json;
     },
     remove: function (key) {
@@ -949,7 +947,7 @@ function Type(obj) {
         }
     }
     return (typeof obj).toLowerCase();
-};
+}
 
 //判断数据类型的方法（对typeof的增强，11种类型的判断，返回小写字符串）
 function Type1(obj) {
@@ -980,14 +978,14 @@ function Type1(obj) {
 
     function classof(obj) {
         return Object.prototype.toString.call(obj).slice(8, -1);
-    };
+    }
 
     function getName(obj) {
         if ('name' in obj) return obj.name;
         return obj.name = obj.constructor.toString().match(/function\s*([^(]*)\(/)[1];
-    };
+    }
     return 'object';
-};
+}
 
 //定时器增强requestAnimationFrame与setInterval兼容
 function yydTimer(fn, msec) {
@@ -1014,7 +1012,7 @@ function yydTimer(fn, msec) {
             };
 
             return id;
-        };
+        }
         id = animate(0);
     } else {
         id = setInterval(function () {
@@ -1029,7 +1027,7 @@ function yydTimer(fn, msec) {
     window.onhashchange = function () {
         clear();
     };
-};
+}
 
 //判断json是否有某个key，不管是否为空
 function jsonHasKey(json, key) {
@@ -1037,7 +1035,7 @@ function jsonHasKey(json, key) {
         return false;
     }
     return key in json;
-};
+}
 
 //判断数组、json、字符串是否所有值都不为空
 function allHaveValue(obj) {
@@ -1063,7 +1061,7 @@ function allHaveValue(obj) {
         }
     }
     return bool;
-};
+}
 
 //对象截取增强方法，返回截取后的对象，非变异方法(string,array,object)
 //obj(要截取的对象)
@@ -1151,7 +1149,7 @@ function yydCut(obj, posiCut, indexCut, bool) {
             break;
     }
     return obj;
-};
+}
 
 /*
     1.5、时间日期处理
@@ -1160,7 +1158,7 @@ function yydCut(obj, posiCut, indexCut, bool) {
 //时间变成两位数
 function toTwo(n) {
     return +n < 10 ? '0' + n : n + '';
-};
+}
 
 //补零函数
 //value（需要补零的值）
@@ -1176,7 +1174,7 @@ function zeroFill(value, length, isBehind) {
     }
 
     return !isBehind ? zeroStr + value : value + zeroStr;
-};
+}
 
 //算出本月天数
 //getMonth获得的月份是从0开始，要加1
@@ -1185,7 +1183,7 @@ function manyDay(year, month) {
     var nextMonth = new Date(year, month, 0);
 
     return nextMonth.getDate();
-};
+}
 
 //正常化日期
 function normalDate(oDate) {
@@ -1199,7 +1197,7 @@ function normalDate(oDate) {
 
     oDate = new Date(oDate);
     return oDate;
-};
+}
 
 //获取星期
 function getWeekName(oDate, str) {
@@ -1209,7 +1207,7 @@ function getWeekName(oDate, str) {
     var arr = ['日', '一', '二', '三', '四', '五', '六'];
 
     return str + arr[iWeek];
-};
+}
 
 //根据出生日期获取年龄
 function getAge(date, real) {
@@ -1228,7 +1226,7 @@ function getAge(date, real) {
     var age = diff > 0 ? (real ? diff : Math.floor(diff)) : 0;
 
     return age;
-};
+}
 
 //根据身份证号码获取性别和生日
 function getSexAndDob(identity) {
@@ -1246,9 +1244,8 @@ function getSexAndDob(identity) {
             dob: dob,
         };
     }
-
     return sexAndDob;
-};
+}
 
 //身份证号码校验、获取身份证信息以及计算最后一位校验码、转换15位身份证为18位
 /*
@@ -1377,7 +1374,7 @@ var idCardNo = {
 
         return result.pass;
     },
-};
+}
 
 //时间格式化函数（根据秒数来格式化）
 //seconds（多少秒）
@@ -1444,9 +1441,8 @@ function secondFormat0(seconds, fmt, adjustFmt) {
             fmt = fmt.replace(result, value);
         }
     }
-
     return fmt;
-};
+}
 
 //日期格式化函数
 //oDate（时间戳或字符串日期都支持）
@@ -1481,9 +1477,8 @@ function dateFormat0(oDate, fmt) {
             fmt = fmt.replace(result, result.length == 1 ? value : (attr == 'y+' ? value.substring(4 - result.length) : toTwo(value)));
         }
     }
-
     return fmt;
-};
+}
 
 //时间格式化(主要用于格式化历史时间到当前时间是多少秒到多少年前)
 //oDate（时间戳或字符串日期都支持）
@@ -1515,7 +1510,7 @@ function dateFormat1(oDate) {
         lookTime = years + '年前';
     }
     return lookTime;
-};
+}
 
 /*
     1.6、格式化函数
@@ -1533,7 +1528,6 @@ function toFixed0(value, length, closeRound) {
     for (var i = 0; i < length; i++) {
         zero += '0';
     }
-
     if (Type(oldValue) == 'number') {
         arr[1] = arr[1] ? arr[1] + zero : zero;
         rNum = arr[1].substring(0, length);
@@ -1560,9 +1554,8 @@ function toFixed0(value, length, closeRound) {
     } else {
         arr = oldValue;
     }
-
     return arr;
-};
+}
 
 //金额格式化
 function amountFormat0(value, dLength, cLength) {
@@ -1596,7 +1589,7 @@ function amountFormat0(value, dLength, cLength) {
 
     if (arr && arr.length) arr = arr.replace('-,', '-');
     return arr;
-};
+}
 
 //格式化手机号为344
 function formatMobile(val) {
@@ -1609,9 +1602,8 @@ function formatMobile(val) {
         val = val.replace(reg1, '$1 ');
         val = val.replace(reg2, '$1 ');
     }
-
     return val;
-};
+}
 
 //科学运算（解决js处理浮点不正确的问题）
 //num1（要进行运算的第一个数字）
@@ -1653,7 +1645,7 @@ function computed(num1, operator, num2) {
             break;
     }
     return result;
-};
+}
 
 /*
     1.7、浏览器相关
@@ -1668,7 +1660,7 @@ function getPrefix() {
             document.title = '内核前缀：-' + arr[i];
         }
     }
-};
+}
 
 //查看键值修正版
 function keyCode() {
@@ -1684,7 +1676,7 @@ function keyCode() {
         oP.innerHTML = '按键' + ':' + aString + ' ' + '键值' + ':' + ev.keyCode;
         document.body.appendChild(oP);
     };
-};
+}
 
 //execCommand对文档执行预定义命令
 //aCommandName表示要执行的命令名称，不可省略
@@ -1733,7 +1725,7 @@ function execCommandFn(key, value) {
     var aValueArgument = value;
 
     document.execCommand(aCommandName, aShowDefaultUI, aValueArgument);
-};
+}
 
 //选中文字兼容
 function selectText(endFn) {
@@ -1823,9 +1815,8 @@ function selectText(endFn) {
                         getNodeListFn(childNodes[i]);
                     }
                 }
-            };
+            }
             getNodeListFn(parent);
-
             return nodeList;
         },
         getCssText: function (parent) { //获取元素以及所有后代的cssText并解析成json
@@ -1857,9 +1848,8 @@ function selectText(endFn) {
                 for (var i = 0; i < parent.childNodes.length; i++) {
                     getCssTextFn(parent.childNodes[i]);
                 }
-            };
+            }
             getCssTextFn(parent);
-
             return result;
         },
     });
@@ -1899,10 +1889,9 @@ function onPaste(obj, endFn) {
                 itemList.push(itemJson);
             }
         }
-
         endFn && endFn(itemList, clipboardData);
-    };
-};
+    }
+}
 
 //图片文件转base64字符串
 function imgFilesToBase64(files, endFn) {
@@ -1931,12 +1920,11 @@ function imgFilesToBase64(files, endFn) {
                 }
             };
         };
-    };
-
+    }
     for (var i = 0; i < files.length; i++) {
         imgToBase64(files[i]);
     }
-};
+}
 
 //图片上传预览
 function preview(oInp, oImg) {
@@ -1948,19 +1936,19 @@ function preview(oInp, oImg) {
             oImg[this.index].src = windowUrl.createObjectURL(this.files[0]);
         };
     }
-};
+}
 
 //判断是否是手机浏览器
 function isPhone() {
     var reg = /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i;
     return window.navigator.userAgent.match(reg) ? true : false;
-};
+}
 
 //判断是否是微信浏览器
 function isWeixin() {
     var reg = /(micromessenger)/i;
     return window.navigator.userAgent.match(reg) ? true : false;
-};
+}
 
 //判断是否是QQ浏览器
 //bool为true判断是否是内置qq浏览器
@@ -1974,13 +1962,13 @@ function isQQ(bool) {
     } else {
         return userAgent.match(reg) && userAgent.match(reg1) ? true : false;
     }
-};
+}
 
 //判断是否是苹果浏览器
 function isSafari() {
     var reg = /(pad|iPhone|Mac|ios)/i;
     return window.navigator.userAgent.match(reg) ? true : false;
-};
+}
 
 //判断是否存在某个app
 //url（自己有调起app的链接，比如支付宝付款链接）
@@ -2003,7 +1991,7 @@ function hasApp(url, index, endFn) {
         dom.src = src;
         dom.style.display = 'none';
         document.body.appendChild(dom);
-    };
+    }
 
     if (url) {
         createIframe(oIframe, url);
@@ -2029,7 +2017,7 @@ function hasApp(url, index, endFn) {
         document.body.removeChild(oIframe);
         endFn && endFn(exist);
     }, delay);
-};
+}
 
 //返回当前地址?后面的参数的json格式(用于submit提交的str='1'&str1='2'格式)
 function strToJson(str) {
@@ -2052,7 +2040,7 @@ function strToJson(str) {
         str = {};
     }
     return str;
-};
+}
 
 //返回当前地址?后面的参数的json格式(用于自己拼接的str={}&str1={}格式)
 //注意要拼接标准json格式
@@ -2077,7 +2065,7 @@ function strToJson1(str) {
         str = {};
     }
     return str;
-};
+}
 
 //传入json，转换成带?的表单格式的url地址
 //json(要转换的对象)
@@ -2097,7 +2085,7 @@ function jsonToStr(json, arr, href) {
     }
     str = href + '?' + str.substr(0, str.length - 1);
     return str;
-};
+}
 
 //正则匹配获取search参数
 //不会有报错，比较安全
@@ -2107,7 +2095,7 @@ function getSearch(key, str) {
     var matchStr = str.match(reg);
 
     return matchStr && matchStr[2] || null;
-};
+}
 
 //微信小程序-获取扫码带过来的参数
 function wxGetQRCodeParams(options) {
@@ -2127,7 +2115,7 @@ function wxGetQRCodeParams(options) {
         params[key] = value;
     }
     return Object.assign({}, options, params);
-};
+}
 
 //存储历史路径以及获取指定路径的上一个路径
 var routerMap = {
@@ -2183,7 +2171,7 @@ function webviewRefresh() {
     setTimeout(function () {
         window.location.replace(rPath);
     }, 300);
-};
+}
 
 //判断页面是否有上一个历史记录页面，即是否可以后退
 /*
@@ -2208,7 +2196,7 @@ function hasPrevHistoryPage() {
                 var index = historyLength.indexOf(number);
 
                 return index != -1 ? historyArr[index] : '';
-            };
+            }
 
             setTimeout(function () {
                 var href = window.location.href;
@@ -2248,7 +2236,7 @@ function hasPrevHistoryPage() {
                 var index = historyLength.indexOf(number);
 
                 return index != -1 ? historyArr[index] : '';
-            };
+            }
 
             setTimeout(function () {
                 var bool = true;
@@ -2271,7 +2259,7 @@ function hasPrevHistoryPage() {
             });
         },
     };
-};
+}
 
 //js全屏模式api(注意，必须要用户点击事件触发，自动触发的事件和mouseover无效)
 //obj(进入全屏模式的元素)
@@ -2305,7 +2293,7 @@ function getFullscreenAPI(obj) {
         api.IsFullScreen = function () { return document[api.isFullScreen] };
     }
     return api;
-};
+}
 
 //浏览器通知
 /*
@@ -2358,9 +2346,8 @@ function notification(config, eventConfig) {
     } else {
         console.log('你的浏览器不支持通知');
     }
-
     return oN;
-};
+}
 
 //利用getUserMedia和canvas裁切视频并保存图片
 /*
@@ -2405,18 +2392,18 @@ function getUserMedia(options) {
 
     function play() {
         oVideo.play();
-    };
+    }
 
     function success(stream) {
         var src = windowUrl.createObjectURL(stream);
 
         oVideo.src = src;
         bind(oVideo, 'canplaythrough', play);
-    };
+    }
 
     function error(error) {
         console.log(error);
-    };
+    }
 
     window.navigator.getMedia({
         video: true,
@@ -2426,8 +2413,7 @@ function getUserMedia(options) {
     function screenshot() {
         oGc.drawImage(oVideo, 0, 0, iWidth, iHeight);
         return oCanvas.toDataURL(options.imgType || imgType.jpg);
-    };
-
+    }
     return screenshot;
 };
 
@@ -2620,7 +2606,7 @@ function ajaxWrap(config) {
                 }
             }
         }
-    };
+    }
 
     if (config.success || config.finally || config.error) {
         xhr.onreadystatechange = onreadystatechangeFn;
@@ -2632,7 +2618,7 @@ function ajaxWrap(config) {
             };
         });
     }
-};
+}
 
 //axios包装
 //支持回调函数和promise两种风格
@@ -2759,7 +2745,7 @@ function axiosWrap(config) {
                 });
             });
         } catch (e) {}
-    };
+    }
 
     function changeRefresh(bool, status) {
         try {
@@ -2773,7 +2759,7 @@ function axiosWrap(config) {
                 });
             });
         } catch (e) {}
-    };
+    }
 
     changeRefresh(false);
 
@@ -2854,7 +2840,7 @@ function axiosWrap(config) {
                     }
                 }
             });
-        };
+        }
 
         !config.noMask && changeLoading(true);
         if (config.success || config.error || config.finally) {
@@ -2884,7 +2870,7 @@ function axiosWrap(config) {
                     all.success && all.success(arguments[0]);
                 }
             });
-        };
+        }
 
         if (all.success || all.error || all.finally) {
             axiosAllResultFn();
@@ -2897,7 +2883,7 @@ function axiosWrap(config) {
     } else {
         return createAxios(config);
     }
-};
+}
 
 //WebSocket请求
 //注：只能send字符串格式，一般用字符串json格式，断线会重新send之前send过的数据
@@ -2950,7 +2936,7 @@ function axiosWrap(config) {
         socMarket.send(params,null,function(res){
             if(res.CMD=='1005')endFn(res);
         },intervalSendFn);
-    };
+    }
 
     var timer=null;
 
@@ -2983,8 +2969,7 @@ function Socket() {
     this.keyArr = [];
 
     return this;
-};
-
+}
 Socket.prototype = {
     init: function (options) {
         this.options = options;
@@ -3021,7 +3006,7 @@ Socket.prototype = {
                 This.reconect();
                 This.resend = true;
             });
-        };
+        }
 
         if (This.onOff) {
             if (This.first) {
@@ -3067,7 +3052,6 @@ Socket.prototype = {
                 }
             }, This.timeout1);
         }
-
         return this;
     },
     pubSend: function () {
@@ -3109,20 +3093,17 @@ Socket.prototype = {
 
         This.keyArr.push(key);
         This.messageFnJson[key] = messageFn;
-
         return this;
     },
     open: function () {
         this.onOff = true;
         this.reconect();
-
         return this;
     },
     close: function () {
         this.onOff = false;
         this.ws && this.ws.close();
         this.ws = null;
-
         return this;
     },
     clearOne: function (reqToken) {
@@ -3134,19 +3115,16 @@ Socket.prototype = {
             delete this.messageFnJson[key];
             delete this.deleteParamsJson[key]
         }
-
         return this;
     },
     clearAll: function () {
         for (var attr in this.messageFnJson) {
             this.clearOne();
         }
-
         return this;
     },
     logState: function (str) {
         console.log(str, 'ws.readyState：' + this.ws.readyState);
-
         return this;
     },
 };
@@ -3184,7 +3162,7 @@ function createScript(src, endFn) {
             endFn && endFn(false);
         }
     }
-};
+}
 
 //开发与线上控制台模式切换
 //arr(数组里面选定的都不输出)
@@ -3192,7 +3170,7 @@ function consoleNull(arr) {
     for (var i = 0; i < arr.length; i++) {
         window.console[arr[i]] = function () {};
     }
-};
+}
 
 //网络处理
 function networkHandle(onlineFn, offlineFn) {
@@ -3207,7 +3185,7 @@ function networkHandle(onlineFn, offlineFn) {
         }, 3000);
         onlineFn && onlineFn();
     };
-};
+}
 
 //打开手机调试模式，2秒钟连续点击5下触发，右下角会出现图标，本地调试有效
 //whiteList（允许调试的域名列表，例子如下：）
@@ -3224,7 +3202,7 @@ function openMoblieDebug(whiteList) {
                 firstLoad && eruda.init();
             });
         }
-    };
+    }
 
     function openJudgeFn() {
         var timer = null;
@@ -3241,18 +3219,18 @@ function openMoblieDebug(whiteList) {
                 timer = null;
             }, 2000);
         }
-    };
+    }
 
     if (open) {
         unbind(document, 'click', openJudgeFn);
         bind(document, 'click', openJudgeFn);
     }
-};
+}
 
 //json克隆副本
 function copyJson(json) {
     return json ? JSON.parse(JSON.stringify(json)) : json;
-};
+}
 
 //处理ios输入框失去焦点页面不会回到原本位置
 function refreshPosition() {
@@ -3272,7 +3250,7 @@ function refreshPosition() {
             });
         }
     }, 300);
-};
+}
 
 //限制文字长度，超出省略号
 function limitText(text, length, symbol) {
@@ -3287,7 +3265,7 @@ function limitText(text, length, symbol) {
         result = text;
     }
     return result;
-};
+}
 
 //根据后缀名判断文件类型
 function fileType(suffix) {
@@ -3308,7 +3286,7 @@ function fileType(suffix) {
     var posIndex = resultList.indexOf(true);
 
     return posIndex != -1 ? typeList[posIndex] : typeList[length];
-};
+}
 
 //加密函数，需要引入crypto-js
 //加密顺序，des->base64->uri
@@ -3318,7 +3296,6 @@ function fileType(suffix) {
 */
 function encodeDesBase64URI(obj, key, iv) {
     if (!obj) return obj;
-
     var keyHex = CryptoJS.enc.Utf8.parse(key || '111111678678');
     var ivHex = CryptoJS.enc.Utf8.parse(iv || '\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008');
 
@@ -3332,9 +3309,8 @@ function encodeDesBase64URI(obj, key, iv) {
         obj = CryptoJS.enc.Base64.stringify(obj.ciphertext);
         obj = encodeURIComponent(obj);
     } catch (e) {}
-
     return obj;
-};
+}
 
 //解密函数，需要引入crypto-js
 //解密顺序，uri->base64->des
@@ -3361,9 +3337,8 @@ function decodeURIBase64Des(obj, key, iv) {
         obj = obj.toString(CryptoJS.enc.Utf8);
         obj = JSON.parse(obj);
     } catch (e) {}
-
     return obj;
-};
+}
 
 //根据屏幕大小设置根节点字体大小
 //getFontSize（是否返回根节点fontSize大小）
@@ -3420,7 +3395,7 @@ function htmlFontSize(getFontSize, basic, maxScale) {
         } else {
             return fontSize;
         }
-    };
+    }
 
     if (!getFontSize) {
         change();
@@ -3428,7 +3403,7 @@ function htmlFontSize(getFontSize, basic, maxScale) {
     } else {
         return change();
     }
-};
+}
 
 //转换单位为rem
 //需要引入import postcssrc from 'root/.postcssrc';
@@ -3445,7 +3420,7 @@ function unit(num, basic) {
     var value = num / basic;
 
     return (value < 0.01 ? 0.01 : value) + 'rem';
-};
+}
 
 //提示框插件
 //str（提示的字符串）
@@ -3479,7 +3454,7 @@ function alerts(str, msec, noMask) {
             document.body.removeChild(oWrap);
         }
     }, msec);
-};
+}
 
 //提示框插件（成功和失败）
 //str（提示的字符串）
@@ -3512,7 +3487,7 @@ function toast(str, bool, msec) {
     setTimeout(function () {
         document.body.removeChild(oWrap);
     }, msec);
-};
+}
 
 //所有积累正则
 //reg（验证正则）
@@ -3665,7 +3640,7 @@ function alertss(arr, endFn, errorFn, msec) {
 
     errorFn && errorFn(errorIndex);
     onOff && endFn && endFn();
-};
+}
 
 //验证码防止刷新插件(多个按钮)
 /*new UnReload([
@@ -3693,7 +3668,7 @@ function UnReload(option) {
         this.exist(option[i]);
         this.Unload();
     }
-};
+}
 UnReload.prototype = {
     start: function (option) {
         var This = this;
@@ -3932,8 +3907,8 @@ function autoClipImage(option) {
                 endFn && endFn(oC.toDataURL(json[type], quality), file);
             };
         };
-    };
-};
+    }
+}
 
 //预加载图片
 //arr(预加载的一组图片地址)
@@ -3957,7 +3932,7 @@ function preload(arr, endFn) {
             loadOver();
         }
     }
-};
+}
 
 //懒加载图片(图片无地址时)
 //imgArr(页面上需要懒加载图片的集合))
@@ -3984,8 +3959,8 @@ function lazyLoading(imgArr, srcName, dis) {
         for (var i = 0; i < index + 1; i++) {
             imgArr[i].src = imgArr[i].getAttribute(srcName);
         }
-    };
-};
+    }
+}
 
 //利用闭包实现函数防抖
 //fn（用执行的函数）
@@ -4014,7 +3989,7 @@ function antiShake(fn, msec) {
             fn.apply(This, Arguments);
         }, msec || 300);
     };
-};
+}
 
 //利用闭包实现函数节流
 //fn（用执行的函数）
@@ -4050,7 +4025,7 @@ function throttle(fn, msec) {
             }, msec || 300);
         }
     };
-};
+}
 
 //简单显示隐藏选项卡插件
 //obj（选项卡控制按钮）
@@ -4069,8 +4044,8 @@ function tab(obj, obj1, styleClass) {
         }
         obj[this.index].classList.add(styleClass);
         obj1[this.index].style.display = 'block';
-    };
-};
+    }
+}
 
 //全选插件
 //obj（全选按钮）
@@ -4088,11 +4063,12 @@ function allChecked(obj, obj1) {
                 obj1[i].checked = false;
             }
         }
-    };
+    }
 
     for (var i = 0; i < obj1.length; i++) {
         bind(obj1[i], 'change', fn1);
     }
+
     fn1();
 
     function fn1() {
@@ -4103,8 +4079,8 @@ function allChecked(obj, obj1) {
             }
             obj.checked = true;
         }
-    };
-};
+    }
+}
 
 //回到顶部插件
 //obj（回到顶部按钮）
@@ -4144,8 +4120,8 @@ function goTop(obj, showPos) {
 
     function fn() {
         document.documentElement.scrollTop = document.body.scrollTop = 0;
-    };
-};
+    }
+}
 
 //label自定义样式绑定单选框插件（配合样式）
 //obj（一组label标签的元素）
@@ -4163,7 +4139,7 @@ function labelFor(obj, classStyle) {
             }
         };
     }
-};
+}
 
 //label自定义样式绑定复选框框插件（配合样式）
 function labelFor1(obj, classStyle) {
@@ -4172,7 +4148,7 @@ function labelFor1(obj, classStyle) {
             this.children[0].checked ? this.classList.add(classStyle) : this.classList.remove(classStyle);
         };
     }
-};
+}
 
 //限制输入类型
 //oninput="inputType(this,0)"
@@ -4188,7 +4164,7 @@ function inputType(This, index) {
         This.value.replace(/[^\u2E80-\u9FFFa-zA-Z]+/g, ''), //汉字和英文7
     ];
     This.value = arr[index || 0];
-};
+}
 
 //input输入汉字不带拼音
 function realInput(obj, endFn) {
@@ -4254,7 +4230,7 @@ function realInput(obj, endFn) {
             }
         }, delayTime || 20);
     });
-};
+}
 
 //下拉刷新页面
 function pullReload() {
@@ -4325,7 +4301,7 @@ function pullReload() {
             });
         },
     });
-};
+}
 
 /*
     1.10、跨域解决方案
@@ -4368,9 +4344,8 @@ function documentDomainCrossDomain(url, domain, endFn, showIframe) {
     oIframe.onload = function () {
         endFn && endFn(oIframe);
     };
-
     document.body.appendChild(oIframe);
-};
+}
 
 //跨域解决方案之window.name + iframe跨域
 //思路：window.name属性的独特之处：name值在不同的页面（甚至不同域名）加载后依旧存在，并且可以支持非常长的 name 值（2MB）。
@@ -4401,7 +4376,7 @@ function windowNameCrossDomain(url, endFn) {
     };
 
     document.body.appendChild(oIframe);
-};
+}
 
 //跨域解决方案之location.hash + iframe跨域
 //思路：a欲与b跨域相互通信，通过中间页c来实现。 三个页面，不同域之间利用iframe的location.hash传值，相同域之间直接js访问来通信。
@@ -4427,7 +4402,7 @@ function windowNameCrossDomain(url, endFn) {
 */
 function hashChangeCrossDomain() {
     this.name = 'hashChangeCrossDomain';
-};
+}
 
 hashChangeCrossDomain.prototype = {
     init: function (showIframe) {
@@ -4509,7 +4484,7 @@ hashChangeCrossDomain.prototype = {
             This.emitIframe.loaded = true;
             hash += 'hashData=' + encodeURIComponent(JSON.stringify(data));
             This.emitIframe.src = url + hash;
-        };
+        }
 
         if (This.emitIframe.loaded) {
             emitFn(true);
@@ -4519,10 +4494,9 @@ hashChangeCrossDomain.prototype = {
             };
             document.body.appendChild(This.emitIframe);
         }
-
         return this;
     },
-};
+}
 
 //跨域解决方案之postMessage跨域
 /*
@@ -4553,7 +4527,7 @@ hashChangeCrossDomain.prototype = {
 */
 function postMessageCrossDomain() {
     this.name = 'postMessageCrossDomain';
-};
+}
 
 postMessageCrossDomain.prototype = {
     init: function (showIframe) {
@@ -4597,7 +4571,7 @@ postMessageCrossDomain.prototype = {
             function emitFn(exec) {
                 if (!exec && This.emitIframe.loaded) return;
                 This.emitIframe.contentWindow.postMessage(JSON.stringify(data), url);
-            };
+            }
 
             if (This.emitIframe.loaded) {
                 emitFn(true);
@@ -4644,7 +4618,7 @@ function htmlTemplate(json) {
         }
 
         return obj;
-    };
+    }
 
     creatChild(parent, children);
 
@@ -4658,9 +4632,8 @@ function htmlTemplate(json) {
             creatChild(childDom, children[i].children);
         }
     };
-
     return parent;
-};
+}
 
 //模仿animation的动画插件
 //obj(要做动画的对象)
@@ -4692,7 +4665,7 @@ function keyframes(obj, json, msec, type) {
             }, attr * msec);
         })(attr, json);
     }
-};
+}
 
 /*
     2.1、运动框架
@@ -4740,7 +4713,7 @@ function move(msec, obj, attr, dis, target, endFn) {
             endFn && endFn.call(obj);
         }
     }, msec);
-};
+}
 
 //匀速同步运动框架
 function manyMove(msec, obj, json, dis, endFn) {
@@ -4770,13 +4743,14 @@ function manyMove(msec, obj, json, dis, endFn) {
             endFn && endFn.call(obj);
         }
     }, msec);
-};
+}
 
 //综合类型同步运动框架
 function allMove(time, obj, json, type, endFn) {
     clearInterval(obj.allMove);
     var Default = {};
     var startTime = new Date().getTime();
+
     for (var attr in json) {
         Default[attr] = 0;
         Default[attr] = attr == 'opacity' ? Math.round(getStyle(obj, attr) * 100) :
@@ -4799,7 +4773,7 @@ function allMove(time, obj, json, type, endFn) {
             endFn && endFn.call(obj);
         }
     }, 1000 / 60)
-};
+}
 
 var moveType = {
     //t:运动消耗的时间 b:初始值 c:目标值 d:设定的总时间 return:返回是随运动变化的结果值
@@ -4909,7 +4883,7 @@ function tweenMove(time, obj, json, type, endFn) {
             }
         }, 1000 / 60);
     }
-};
+}
 
 //设置css样式
 function css(obj, attr, value) {
@@ -4965,7 +4939,7 @@ function css(obj, attr, value) {
         }
     }
     return function (attr_in, value_in) { css(obj, attr_in, value_in) };
-};
+}
 
 //兼容css3样式
 function setCss3(obj, attr, value) {
@@ -5000,7 +4974,7 @@ function setCss3(obj, attr, value) {
     for (var i = 0; i < arr.length; i++) {
         obj.style[arr[i] + 'Transform'] = val;
     }
-};
+}
 
 /*
     2.2、轮播相关
@@ -5047,6 +5021,7 @@ function autoplay(obj, obj1, styleClass, moveType, t, t1, t2, t3) {
         iNow = iL / 2;
         css(obj, 'translateX', -iW * iL / 2);
     }
+
     bind(obj, 'touchstart', fn2);
 
     function fn2(ev) {
@@ -5059,7 +5034,7 @@ function autoplay(obj, obj1, styleClass, moveType, t, t1, t2, t3) {
         iOld = css(obj, 'translateX');
         bind(obj, 'touchmove', pDef);
         bind(obj1, 'touchmove', pDef);
-    };
+    }
 
     bind(obj, 'touchmove', fn3);
 
@@ -5075,7 +5050,7 @@ function autoplay(obj, obj1, styleClass, moveType, t, t1, t2, t3) {
         } else {
             css(obj, 'translateX', iOld + lDis);
         }
-    };
+    }
 
     bind(obj, 'touchend', fn4);
 
@@ -5093,7 +5068,7 @@ function autoplay(obj, obj1, styleClass, moveType, t, t1, t2, t3) {
         });
         unbind(obj, 'touchmove', pDef);
         unbind(obj1, 'touchmove', pDef);
-    };
+    }
 
     bind(document, 'touchmove', goOn);
     bind(document, 'touchend', goOn);
@@ -5112,7 +5087,7 @@ function autoplay(obj, obj1, styleClass, moveType, t, t1, t2, t3) {
             fn();
             tweenMove(t1, obj, { 'translateX': -iNow * iW }, moveType);
         }, t);
-    };
+    }
 
     function fn() {
         if (iNow > iL / 2) {
@@ -5127,8 +5102,8 @@ function autoplay(obj, obj1, styleClass, moveType, t, t1, t2, t3) {
             aLi[i].classList.remove(styleClass);
         }
         aLi[index].classList.add(styleClass);
-    };
-};
+    }
+}
 
 //手机无缝滚动插件（可以不给左右按钮）
 //obj（滚动的父容器）
@@ -5152,7 +5127,7 @@ function autoplay1(obj, mses, dis, lB, rB) {
             }
             obj.style.left = obj.offsetLeft + dis + 'px';
         }, mses);
-    };
+    }
 
     if (lB && rB) {
         bind(lB, 'click', fn1);
@@ -5160,13 +5135,14 @@ function autoplay1(obj, mses, dis, lB, rB) {
         function fn1() {
             dis = -Math.abs(dis);
             fn3();
-        };
+        }
+
         bind(rB, 'click', fn2);
 
         function fn2() {
             dis = Math.abs(dis);
             fn3();
-        };
+        }
     }
 
     function fn3() {
@@ -5176,8 +5152,8 @@ function autoplay1(obj, mses, dis, lB, rB) {
         } else {
             fn();
         }
-    };
-};
+    }
+}
 
 //电脑无缝滚动插件
 //obj(轮播的父容器)
@@ -5219,7 +5195,7 @@ function autoplay2(obj, prev, next, moveType, t, t1) {
     function fn1() {
         clearInterval(timer);
         timer = setInterval(prev.onclick, t);
-    };
+    }
 
     function fn() {
         if (iNow > oLi.length / 2) {
@@ -5232,8 +5208,8 @@ function autoplay2(obj, prev, next, moveType, t, t1) {
         tweenMove(t1, obj, { 'translateX': -iW * iNow }, moveType, function () {
             over = false;
         });
-    };
-};
+    }
+}
 
 //导航栏滑动插件
 //obj（要滑动的容器）
@@ -5273,10 +5249,10 @@ function slide(obj, styleClass, moveType, t) {
             if (iDis > 0) iDis = 0;
             if (iDis < iMin) iDis = iMin;
             tweenMove(t, obj, { 'translateX': iDis }, moveType);
-        };
-    };
+        }
+    }
     bind(obj, 'touchmove', pDef);
-};
+}
 
 //划屏惯性滚动插件（防隐藏元素）
 //obj（要滑动的容器）
@@ -5310,7 +5286,7 @@ function slide1(obj, msec, n) {
         iL = ev.changedTouches[0].pageX;
         iT = ev.changedTouches[0].pageY;
         bind(obj, 'touchmove', pDef);
-    };
+    }
 
     bind(obj, 'touchmove', fn1);
 
@@ -5325,7 +5301,7 @@ function slide1(obj, msec, n) {
         iC = Math.abs(iX) - Math.abs(iY);
 
         iC > 0 ? fn3() : unbind(obj, 'touchmove', pDef);
-    };
+    }
 
     function fn3() {
         if (iDX > 0) {
@@ -5337,7 +5313,7 @@ function slide1(obj, msec, n) {
             clearInterval(timer);
         }
         css(obj, 'translateX', iDX);
-    };
+    }
 
     bind(obj, 'touchend', fn2);
 
@@ -5352,8 +5328,8 @@ function slide1(obj, msec, n) {
                 if (Math.abs(iS) < 1) clearInterval(timer);
             }, msec || 1000 / 60);
         }
-    };
-};
+    }
+}
 
 //两点滑动插件
 //obj（要滑动的容器）
@@ -5384,7 +5360,7 @@ function slide2(obj, t) {
         iL = ev.changedTouches[0].pageX;
         iT = ev.changedTouches[0].pageY;
         bind(obj, 'touchmove', pDef);
-    };
+    }
 
     bind(obj, 'touchmove', fn1);
 
@@ -5399,14 +5375,14 @@ function slide2(obj, t) {
         iC = Math.abs(iX) - Math.abs(iY);
 
         iC > 0 ? fn3() : unbind(obj, 'touchmove', pDef);
-    };
+    }
 
     function fn3() {
         if (iDX > 0) iDX = 0;
         if (iDX < iMin) iDX = iMin;
 
         css(obj, 'translateX', iDX);
-    };
+    }
 
     bind(obj, 'touchend', fn2);
 
@@ -5422,8 +5398,8 @@ function slide2(obj, t) {
                 tweenMove(t || 500, obj, { 'translateX': iLate }, 'linear');
             }
         }
-    };
-};
+    }
+}
 
 //手机划屏翻页插件
 //obj(轮播图的父容器)，obj1（高亮的小点的父容器），styleClass（高亮小点的样式）
@@ -5468,7 +5444,7 @@ function slide3(obj, obj1, styleClass, t) {
         iOld = css(obj, 'translateX');
         bind(obj, 'touchmove', pDef);
         bind(obj1, 'touchmove', pDef);
-    };
+    }
 
     bind(obj, 'touchmove', fn3);
 
@@ -5487,7 +5463,7 @@ function slide3(obj, obj1, styleClass, t) {
             }
             css(obj, 'translateX', iOld + lDis);
         }
-    };
+    }
 
     bind(obj, 'touchend', fn4);
 
@@ -5505,7 +5481,7 @@ function slide3(obj, obj1, styleClass, t) {
         });
         unbind(obj, 'touchmove', pDef);
         unbind(obj1, 'touchmove', pDef);
-    };
+    }
 
     function fn() {
         if (iNow > iL - 1) {
@@ -5518,8 +5494,8 @@ function slide3(obj, obj1, styleClass, t) {
             aLi[i].classList.remove(styleClass);
         }
         aLi[index].classList.add(styleClass);
-    };
-};
+    }
+}
 
 //公告滚动插件
 //obj(要滚动的父容器)
@@ -5541,7 +5517,7 @@ function autoNotice(obj, moveType, t, t1) {
         }
         tweenMove(t1 || 1000, obj, { 'translateY': -iNow * iH }, moveType);
     }, t || 2000);
-};
+}
 
 //横向公告滚动插件
 //obj(要滚动的父容器)
@@ -5565,7 +5541,7 @@ function autoNotice1(obj, dis, msec) {
         }
         css(obj, 'translateX', css(obj, 'translateX') - (dis || 1));
     }, msec || 1000 / 60);
-};
+}
 
 //手机模拟滚动插件(body定为一屏幕的高度)
 //obj（要滚动的容器）
@@ -5615,7 +5591,7 @@ function pageScroll(obj, sFn, mFn, eFn) {
             clearInterval(timer);
         }
         css(obj, 'translateY', iY);
-    };
+    }
     bind(obj, 'touchend', function (ev) {
         var ev = ev || event;
 
@@ -5641,7 +5617,7 @@ function pageScroll(obj, sFn, mFn, eFn) {
         }, 1000 / 60);
         eFn && eFn.call(this, oldY, iS);
     });
-};
+}
 
 /*
     2.3、特效
@@ -5671,7 +5647,7 @@ function changeColorWords(obj, color, color1, width) {
         oI[i].style.cssText = 'float:left; height:100%; font-style:normal; color:' + color + '; position:relative;';
         oB[i].style.cssText = 'font-weight:normal; width:' + width + '; height:100%; color:' + color1 + '; position:absolute; left:0; top:0;overflow:hidden;';
     }
-};
+}
 
 //模拟水印效果插件
 //msec(水印运动的频率)
@@ -5714,7 +5690,7 @@ function waterWave(msec, obj, iDis, color, color1, endFn) {
                 }, 1000);
             }
         }, msec);
-    };
+    }
 
     bind(obj, 'touchmove', function () {
         clearInterval(timer);
@@ -5742,14 +5718,14 @@ function waterWave(msec, obj, iDis, color, color1, endFn) {
                 }
             }
         }, 20);
-    };
+    }
 
     bind(obj, 'contextmenu', pDef);
     bind(obj, 'click', function () {
         click = true;
         fn2();
     });
-};
+}
 
 //抛物线运动插件(公式：y=ax^2+bx+c)
 //obj(要运动的对象)
@@ -5800,7 +5776,7 @@ function fly(obj, a, t, t1, sLeft, sTop, eLeft, eTop, stepFn, endFn) {
             stepFn && stepFn.call(this, sLeft + disX, sTop + disY);
         }
     }, t1 || 1000 / 60);
-};
+}
 
 
 //对拟态类名(字符串样式)的操作，必须先用set方法
@@ -5849,7 +5825,7 @@ function yydTabBar(obj, str, endFn) {
                 for (var i = 0; i < obj.length; i++) {
                     obj[i].classList.remove('active');
                 }
-            };
+            }
             if (index != oldIndex) {
                 oldIndex = index;
                 clear();
@@ -5868,7 +5844,7 @@ function yydTabBar(obj, str, endFn) {
             }
         };
     }
-};
+}
 
 //文字蛛网效果
 //obj(生成蛛网效果文字的父容器)
@@ -5919,7 +5895,7 @@ function cobweb(obj, scaleC, scaleB) {
             };
         };
     };
-};
+}
 
 //照片墙拖拽
 //obj(一组图片元素)
@@ -5944,7 +5920,7 @@ function imgDrag(obj, endFn, startFn) {
 
     function removeItem() {
         window.sessionStorage.removeItem('yydImgDragOnOff');
-    };
+    }
     window.onunload = removeItem;
     window.onhashchange = removeItem;
     if (window.sessionStorage.getItem('yydImgDragOnOff')) {
@@ -6020,7 +5996,7 @@ function imgDrag(obj, endFn, startFn) {
             iMinIndex = -1;
         });
     }
-};
+}
 
 //生成3D文字球体，圆锥，圆柱，扭曲圆柱
 //str（自定义文字，满42个才会生成，不然显示默认的）
@@ -6045,7 +6021,7 @@ function setCss31(obj, attrObj) { //依赖此函数设置样式
         obj.style["o" + newi] = attrObj[i];
         obj.style["ms" + newi] = attrObj[i];
     }
-};
+}
 
 function solid(str, shape, width, t, t1) {
     var s = '自定义文字一定要满四十二个字 自定义文字一定要满四十二个字 自定义文字一定要满四十二个字 自定义文字一定要满四十二个字 自定义文字一定要满四十二个字 自定义文字一定要满四十二个字';
@@ -6343,7 +6319,7 @@ function solid(str, shape, width, t, t1) {
         angleY -= 1;
         setCss31(oUl, { transform: 'rotateX(' + angleX + 'deg) rotateY(' + angleY + 'deg)' });
     }, t1 || 60);
-};
+}
 
 /*
     3.1、canvas
@@ -6380,7 +6356,7 @@ function brush(obj, lineWidth, color, endFn) {
         bind(obj, 'touchend', function () {
             endFn && endFn(obj.toDataURL());
         });
-    };
+    }
 
     function pc() {
         obj.onmousedown = function (ev) {
@@ -6401,8 +6377,8 @@ function brush(obj, lineWidth, color, endFn) {
             };
             return false;
         };
-    };
-};
+    }
+}
 
 //创建canvas时钟
 /*
@@ -6425,7 +6401,7 @@ function brush(obj, lineWidth, color, endFn) {
         .createPointer(aH,5,20)//创建时针
         .createPointer(aM,3,40)//创建分针
         .createPointer(aS,1,60);//创建秒针
-    };
+    }
 
     clock();
     setInterval(clock,1000);
@@ -6436,7 +6412,7 @@ function CanvasClock(obj, iX, iY, iR) {
     this.iX = iX || 200;
     this.iY = iY || 200;
     this.iR = iR || 100;
-};
+}
 CanvasClock.prototype = {
     createDial: function (height) { //生成表盘，也可以用于覆盖刻度
         this.oGC.beginPath();
@@ -6482,7 +6458,7 @@ function getXY(obj, x, y) {
     color[2] = d[4 * (y * w + x) + 2];
     color[3] = d[4 * (y * w + x) + 3];
     return color;
-};
+}
 
 //canvas设置坐标的rgba颜色
 function setXY(obj, x, y, color) {
@@ -6493,7 +6469,7 @@ function setXY(obj, x, y, color) {
     d[4 * (y * w + x) + 1] = color[1];
     d[4 * (y * w + x) + 2] = color[2];
     d[4 * (y * w + x) + 3] = color[3];
-};
+}
 
 //生成canvas图片反色
 function cInverse(obj, src) {
@@ -6525,7 +6501,7 @@ function cInverse(obj, src) {
         }
         cg.putImageData(oImg, 0, 0);
     };
-};
+}
 
 //生成canvas图片倒影
 function cReflection(obj, src) {
@@ -6558,7 +6534,7 @@ function cReflection(obj, src) {
         }
         cg.putImageData(cImg, 0, 0);
     };
-};
+}
 
 //生成canvas图片渐变
 function cGradient(obj, src) {
@@ -6591,7 +6567,7 @@ function cGradient(obj, src) {
         }
         cg.putImageData(cImg, 0, 0);
     };
-};
+}
 
 //生成canvas图片马赛克
 function cMosaic(obj, src, m) {
@@ -6625,7 +6601,7 @@ function cMosaic(obj, src, m) {
         }
         cg.putImageData(cImg, 0, 0);
     };
-};
+}
 
 /*
     4.1、高德地图相关
@@ -6670,7 +6646,7 @@ function getLocation(endFn) {
             alert('您的浏览器不支持地理位置定位');
         }
     });
-};
+}
 
 //高德定位接口(需要引入jq)
 //<script src="https://webapi.amap.com/maps?v=1.3&key=c14b6228b5ae543b1718ab6ebc4d19f5"></script>
@@ -6683,7 +6659,7 @@ function getLocation1(endFn) {
             if (arguments.length == 2) {
                 window.sessionStorage.setItem(key, value);
             }
-        };
+        }
 
         yydTimer(function (clear) {
             var city = session('getLocationCity');
@@ -6731,7 +6707,7 @@ function getLocation1(endFn) {
                     session('getLocationLatitude', latitude);
                     session('getLocationProvince', province);
                     session('getLocationDetail', detail);
-                };
+                }
 
                 function onComplete(data) {
                     console.log(data);
@@ -6743,27 +6719,27 @@ function getLocation1(endFn) {
 
                     setSession(city, longitude, latitude, province, detail);
                     endFn && endFn(city, longitude, latitude, province, detail); //http纬度为L，https纬度为M
-                };
+                }
 
                 function onError(data) {
                     console.log(data);
                     setSession('南昌市', 115.89, 28.68, '江西省', '江西省南昌市卫东');
                     endFn && endFn('南昌市', 115.89, 28.68, '江西省', '江西省南昌市卫东');
-                };
+                }
                 //获取当前位置信息
                 getCurrentPosition();
 
                 function getCurrentPosition() {
                     geolocation.getCurrentPosition();
-                };
+                }
                 //监控当前位置并获取当前位置信息
                 function watchPosition() {
                     geolocation.watchPosition();
-                };
+                }
             });
-        };
+        }
     });
-};
+}
 
 //生成高德地图多点标注地址
 //arr示例[{longitude:'',latitude:'',name:''}]
@@ -6778,7 +6754,7 @@ function createGaodeMapUrl1(arr) {
     }
     str = str.substring(0, str.length - 1);
     return url + encodeURIComponent(str);
-};
+}
 
 //生成高德地图搜索周边地址
 //keyword(搜索关键字)
@@ -6790,7 +6766,7 @@ function createGaodeMapUrl2(keyword, longitude, latitude, city) {
     var str = 'callnative=1&keyword=' + keyword + '&center=' + longitude + ',' + latitude + '&city=' + city;
 
     return url + str;
-};
+}
 
 //生成高德地图导航地址
 //start(起始点参数)
@@ -6800,14 +6776,15 @@ function createGaodeMapUrl3(start, end) {
     var str = start.longitude + ',' + start.latitude + ',' + start.name + '&daddr=' + end.longitude + ',' + end.latitude + ',' + end.name + '&callnative=1';
 
     return url + str;
-};
+}
 
 //根据经纬度算大圆上两点间距离(假设地球为标准圆)
 function getGreatCircleDistance(lng1, lat1, lng2, lat2) {
     var EARTH_RADIUS = 6378137.0; //地球半径单位M
+
     function getRad(d) {
         return d * Math.PI / 180.0;
-    };
+    }
 
     var radLat1 = getRad(lat1);
     var radLat2 = getRad(lat2);
@@ -6819,14 +6796,15 @@ function getGreatCircleDistance(lng1, lat1, lng2, lat2) {
     s = Math.round(s * 10000) / 10000.0;
 
     return Math.round(s);
-};
+}
 
 //根据经纬度算椭圆上两点间距离
 function getFlatternDistance(lng1, lat1, lng2, lat2) {
     var EARTH_RADIUS = 6378137.0; //地球半径单位M
+
     function getRad(d) {
         return d * Math.PI / 180.0;
-    };
+    }
 
     var f = getRad((lat1 + lat2) / 2);
     var g = getRad((lat1 - lat2) / 2);
@@ -6854,7 +6832,7 @@ function getFlatternDistance(lng1, lat1, lng2, lat2) {
     h2 = (3 * r + 1) / 2 / s;
 
     return Math.round(d * (1 + fl * (h1 * sf * (1 - sg) - h2 * (1 - sf) * sg)));
-};
+}
 
 //新浪天气接口(需要引入jq)
 function getWeather(city, endFn) {
@@ -6892,7 +6870,7 @@ function getWeather(city, endFn) {
             });
         }
     });
-};
+}
 
 /*
     5.1、微信支付与微信sdk调用
@@ -6973,14 +6951,14 @@ function WXPay(params, successFn, failFn, finallyFn) {
                 finallyFn && finallyFn(res);
             }
         );
-    };
+    }
 
     if (Type(WeixinJSBridge) == 'undefined') {
         bind('WeixinJSBridgeReady', onBridgeReady);
     } else {
         onBridgeReady();
     }
-};
+}
 
 //微信sdk调用微信api
 /*
@@ -7131,7 +7109,7 @@ function WXSDK(config, type, params, readyFn) {
             console.log('错误', res);
         });
     });
-};
+}
 
 /*
     6.1、各种参考函数
@@ -7157,7 +7135,7 @@ function foreach(arr, fn) {
         }
 
     }
-};
+}
 
 //十六进制颜色转rgb颜色
 //hex为字符串
@@ -7169,7 +7147,7 @@ function HEXToRGB(hex) {
     var b = hex & hex256;
 
     return 'rgb(' + r + ',' + g + ',' + b + ')';
-};
+}
 
 //rgb颜色转十六进制颜色
 //rgb为字符串
@@ -7179,7 +7157,7 @@ function RGBToHEX(rgb) {
     var hex = arr[1] << 16 | arr[2] << 8 | arr[3];
 
     return '#' + hex.toString(16);
-};
+}
 
 //布局转换
 function layoutChange(obj) {
@@ -7191,7 +7169,7 @@ function layoutChange(obj) {
         obj[i].style.position = 'absolute';
         obj[i].style.margin = '0';
     }
-};
+}
 
 //获取数组最小值
 function getMin(arr) {
@@ -7203,7 +7181,7 @@ function getMin(arr) {
         }
     }
     return iMin;
-};
+}
 
 //获取数组最大值
 function getMax(arr) {
@@ -7215,7 +7193,7 @@ function getMax(arr) {
         }
     }
     return iMax;
-};
+}
 
 //数组去重
 function noRepeat(arr) {
@@ -7227,7 +7205,7 @@ function noRepeat(arr) {
             }
         }
     }
-};
+}
 
 //数组去重(利用json)
 function noRepeat1(arr) {
@@ -7241,7 +7219,7 @@ function noRepeat1(arr) {
         }
     }
     return result;
-};
+}
 
 //获取多个任意class(class之间用逗号隔开)
 function getClass(parent, tagN, classN) {
@@ -7260,7 +7238,7 @@ function getClass(parent, tagN, classN) {
         }
     }
     return arr;
-};
+}
 
 //配合正则获取单个class
 function getByClass(parent, tagN, classN) {
@@ -7274,7 +7252,7 @@ function getByClass(parent, tagN, classN) {
         }
     }
     return arr;
-};
+}
 
 //添加任意class
 function addClass(obj, classN) {
@@ -7287,7 +7265,7 @@ function addClass(obj, classN) {
             obj.className += ' ' + classN;
         }
     }
-};
+}
 
 //移除任意class
 function removeClass(obj, classN) {
@@ -7299,7 +7277,7 @@ function removeClass(obj, classN) {
             obj.className = arrClass.join(' ');
         }
     }
-};
+}
 
 //根据设备宽度来改变viewport默认缩放
 function metaViewport() {
@@ -7334,7 +7312,7 @@ function metaViewport() {
     }
     change();
     window.onresize = change;
-};
+}
 
 //简单实现路由
 //配置函数放在所有dom后面执行（否则onload不触发路由回调函数）
@@ -7345,7 +7323,7 @@ function router() {
         this.routes = {};
         this.currentUrl = '';
         this.init();
-    };
+    }
     Router.prototype = {
         init: function () {
             bind(window, 'load', this.refresh.bind(this));
@@ -7360,7 +7338,7 @@ function router() {
         }
     };
     window.Router = new Router(); //把路由配置函数挂载到window对象下
-};
+}
 
 //自己实现双向数据绑定
 /*
@@ -7407,7 +7385,7 @@ function yydModel() {
 
             setMatchTextNode(childNodes[i].childNodes);
         }
-    };
+    }
     setMatchTextNode(document.body.childNodes);
 
     function setModelData(childNodes, key, newVal) {
@@ -7438,7 +7416,7 @@ function yydModel() {
 
             setModelData(childNodes[i].childNodes, key, newVal);
         }
-    };
+    }
 
     function definePropertyFn(obj, key) {
         Object.defineProperty(obj, key, {
@@ -7459,7 +7437,7 @@ function yydModel() {
                 });
             }
         });
-    };
+    }
 
     for (var i = 0; i < oAllModel.length; i++) {
         var key = oAllModel[i].getAttribute('yyd-model');
@@ -7495,7 +7473,7 @@ function yydModel() {
     };
 
     return objMap;
-};
+}
 
 //实现promise对象
 function Prom(fn) {
@@ -7506,7 +7484,7 @@ function Prom(fn) {
 
     fn && fn(this.resolve.bind(this), this.reject.bind(this));
     return this;
-};
+}
 Prom.prototype = {
     resolve: function (data) {
         if (this.status == 'rejected') this.catch('promise is only once change,but it was rejected');
@@ -7559,7 +7537,7 @@ Prom.prototype = {
     finally: function (fn) {
         fn && (this.finallyFn = fn);
     }
-};
+}
 
 //包装成一个promise对象
 function setPromise(fn, ag1, ag2) {
@@ -7570,7 +7548,7 @@ function setPromise(fn, ag1, ag2) {
         }
         //传入的函数加入return [函数名].resolve(data);//因为resolve后面的不会再走了，加上return明确点
     });
-};
+}
 
 //钟摆运动判断示例
 //obj(钟摆运动的对象)
@@ -7602,7 +7580,7 @@ function pendulum(obj, disX, disY, sX, msec) {
         }
         aDiv.style.top = y + speedY + 'px';
     }, msec || 50);
-};
+}
 
 //添加删除遮罩层
 function mask(zIndex, onOff) {
@@ -7618,7 +7596,7 @@ function mask(zIndex, onOff) {
     if (document.getElementById('yydMask') && !onOff) {
         document.body.removeChild(document.getElementById('yydMask'));
     }
-};
+}
 
 //创建一个loading样式
 //mask(是否能看见遮罩)
@@ -7680,14 +7658,14 @@ function loadingMask(mask, onOff, scale, msec, zIndex) {
             oli[(iNum + 3) % 12].style.backgroundColor = 'rgba(55,55,55,0.6)';
             oli[(iNum + 4) % 12].style.backgroundColor = 'rgba(55,55,55,0.5)';
             oli[(iNum + 5) % 12].style.backgroundColor = 'rgba(55,55,55,0.4)';
-        };
+        }
     }
 
     if (document.getElementById('yydLoading') && !onOff) {
         clearInterval(timer);
         document.body.removeChild(document.getElementById('yydMask1'));
     }
-};
+}
 
 //键盘控制物体连续移动
 function kMove(obj, dis) {
@@ -7723,7 +7701,7 @@ function kMove(obj, dis) {
             case 40:
                 Move.b = true;
         }
-    };
+    }
 
     bind(document, 'keyup', keyupFn);
 
@@ -7742,8 +7720,8 @@ function kMove(obj, dis) {
             case 40:
                 Move.b = false;
         }
-    };
-};
+    }
+}
 
 //面向对象：拖拽原型
 function Drag(object) {
@@ -7755,7 +7733,7 @@ function Drag(object) {
         This.fnDown(ev);
         return false;
     };
-};
+}
 Drag.prototype.fnDown = function (ev) {
     var This = this;
     var ev = ev || event;
@@ -7780,7 +7758,7 @@ Drag.prototype.fnUp = function () {
 //面向对象：继承并加上拖拽限制
 function LimitDrag(object) {
     Drag.call(this, object);
-};
+}
 for (var i in Drag.prototype) {
     LimitDrag.prototype[i] = Drag.prototype[i];
 }
@@ -7804,7 +7782,7 @@ LimitDrag.prototype.fnMove = function (ev) {
 //根据半径和角度获得x和y的坐标
 function circleGetXY(radius, angle) {
     return { x: Math.round(Math.sin(angle * Math.PI / 180) * radius), y: Math.round(Math.cos(angle * Math.PI / 180) * radius) }
-};
+}
 //过渡结束时候初始化属性
 function transitionEndFn() {
     this.style.transition = '50ms 100ms';
@@ -7812,17 +7790,17 @@ function transitionEndFn() {
     this.style.opacity = 1;
     this.style.filter = 'alpha(opacity:1)';
     removeEnd(this);
-};
+}
 //元素过渡结束的时候加上transitionEndFn函数
 function addEnd(obj) {
     bind(obj, 'transitionend', transitionEndFn);
     bind(obj, 'webkitTransitionEnd', transitionEndFn);
-};
+}
 //元素过渡结束的时候再删除transitionEndFn函数
 function removeEnd(obj) {
     unbind(obj, 'transitionend', transitionEndFn);
     unbind(obj, 'webkitTransitionEnd', transitionEndFn);
-};
+}
 
 /*
     7.1、排序算法
@@ -7842,7 +7820,7 @@ function bubbleSort(arr, fn) {
             }
         }
     }
-};
+}
 
 //选择排序法（万次排序160ms）
 //bool（false或不传，从小到大，true，从大到小）
@@ -7855,8 +7833,7 @@ function selectSort(arr, bool) {
 
         originArr.splice(originArr.indexOf(value), 1);
         arr[index] = value;
-    };
-
+    }
     for (var i = 0; i < arr.length; i++) {
         arrGetValue(i, !bool ? 'min' : 'max');
     }
@@ -7874,7 +7851,7 @@ function insertSort(arr, bool) {
         }
         arr[j] = temp;
     }
-};
+}
 
 //希尔排序法（万次排序40ms）
 //bool（false或不传，从小到大，true，从大到小）
@@ -7892,7 +7869,7 @@ function shellSort(arr, bool) {
             arr[k] = temp;
         }
     }
-};
+}
 
 //快速排序法（万次排序20ms）
 //bool（false或不传，从小到大，true，从大到小）
@@ -7912,7 +7889,7 @@ function quickSort(arr, bool) {
         }
     }
     return quickSort(minArr, bool).concat(basicValue, quickSort(maxArr, bool));
-};
+}
 
 //归并排序法（万次排序10ms）
 //bool（false或不传，从小到大，true，从大到小）
@@ -7950,7 +7927,7 @@ function mergeSort(arr, bool) {
                 n++;
             }
         }
-    };
+    }
 
     if (arr.length < 2) return;
     var step = 1;
@@ -7969,7 +7946,7 @@ function mergeSort(arr, bool) {
         if (iR < arr.length) mergeArr(arr, iL, iL + step, iR, arr.length);
         step *= 2;
     }
-};
+}
 
 /*
     7.2、其它算法
@@ -7994,7 +7971,7 @@ function clone(obj) {
         return obj;
     }
     return o;
-};
+}
 
 //进制转换器
 //value（要转换的值，字符串类型）
@@ -8004,7 +7981,6 @@ function sysConvert(value, current, target) {
     var value = +value;
 
     if (!value && value !== 0) return value;
-
     if (current == 10) {
         value = value.toString(target);
     } else if (target == 10) {
@@ -8012,9 +7988,8 @@ function sysConvert(value, current, target) {
     } else {
         value = parseInt(value, current).toString(target);
     }
-
     return value;
-};
+}
 
 //二进制与十进制的转换（toString和parseInt已实现各种进制转换，这里只是说明思路）
 //value（要转换的值）
@@ -8041,23 +8016,22 @@ function changeSystem(value, bool) {
             result += arr[i] * Math.pow(2, i);
         }
     }
-
     return result;
-};
+}
 
 //计算排列函数(arrange)
 function arrange(m, n) {
     var f = hierarchy;
 
     return f(m) / f(m - n);
-};
+}
 
 //计算组合的函数(combination)
 function combination(m, n) {
     var f = hierarchy;
 
     return f(m) / (f(m - n) * f(n));
-};
+}
 
 //递归计算阶层
 function hierarchy(num) {
@@ -8065,7 +8039,7 @@ function hierarchy(num) {
         return 1;
     }
     return num * hierarchy(num - 1);
-};
+}
 
 //递归计算阶层(尾递归)
 //做到只调用自身，把所有用到的内部变量改写成函数的参数
@@ -8075,7 +8049,7 @@ function hierarchy1(num, total) {
         return total;
     }
     return hierarchy1(num - 1, num * total);
-};
+}
 
 //作为trampoline函数的参数
 function trampolineFn(num, total) {
@@ -8083,7 +8057,7 @@ function trampolineFn(num, total) {
         return total;
     }
     return trampolineFn.bind(null, num - 1, num * total);
-};
+}
 
 //递归计算阶层(改为循环，减少调用栈)
 //蹦床函数，可以将递归执行转为循环执行
@@ -8093,7 +8067,7 @@ function trampoline(fn) {
         fn = fn();
     }
     return fn;
-};
+}
 
 //作为tco函数的参数
 function tcoFn(num, total) {
@@ -8120,7 +8094,7 @@ function tco(fn) {
             return value;
         }
     };
-};
+}
 
 //最终合成的函数
 var tcoResultFn = tco(tcoFn);
@@ -8151,7 +8125,7 @@ function changeXY(size) {
         }
     }
     return arr;
-};
+}
 
 //数组行列矩阵互换
 function changeXY1(arr, size) {
@@ -8200,14 +8174,14 @@ function ysfh(total, step) {
         }
     }
     console.log(arr);
-};
+}
 
 //双向循环列表（遍历时请注意判断next是否为head）
 function Node(ele) { //建立链表节点，不需要用到
     this.ele = ele;
     this.prev = null;
     this.next = null;
-};
+}
 
 function DList() { //建立一个双向循环链表对象
     this.head = new Node('head');
@@ -8215,7 +8189,7 @@ function DList() { //建立一个双向循环链表对象
     this.head.next = this.head;
     this.length = 0;
     this.currentNode = this.head;
-};
+}
 DList.prototype = {
     find: function (ele) { //寻找链表的某个元素
         var currentNode = this.head;
@@ -8284,7 +8258,7 @@ DList.prototype = {
     show: function () { //显示当前指针的节点
         return this.currentNode;
     }
-};
+}
 
 //链表递归实现约舍夫环
 function killGame(num, step) {
@@ -8318,12 +8292,12 @@ function killGame(num, step) {
             iNow = 0;
         }
         whileFn();
-    };
+    }
 
     whileFn();
 
     console.log('幸存的位置是:' + people.showArr());
-};
+}
 
 //循环链表实现约舍夫环
 function killGame1(num, step) {
@@ -8354,7 +8328,7 @@ function killGame1(num, step) {
     }
 
     console.log('幸存的位置是:' + people.showArr());
-};
+}
 
 /*
     7.3、设计模式
@@ -8368,7 +8342,7 @@ function before(fn, beforeFn) {
         beforeFn.apply(this, arguments);
         fn.apply(this, arguments);
     };
-};
+}
 
 //装饰者模式，在函数之后添加操作
 //fn（原函数）
@@ -8378,7 +8352,7 @@ function after(fn, afterFn) {
         fn.apply(this, arguments);
         afterFn.apply(this, arguments);
     };
-};
+}
 
 /*
     8.1、vue项目中用到
@@ -8409,7 +8383,7 @@ var pullLoading = function (This, apiFn, json, list, endFn1, endFn2, dataName, p
     //json克隆副本
     function Json(json) {
         return JSON.parse(JSON.stringify(json));
-    };
+    }
     var loadOver = true;
     var getList = function (endFn, endFn1) {
         apiFn(json, function (data) {
@@ -8477,7 +8451,7 @@ var pullLoading = function (This, apiFn, json, list, endFn1, endFn2, dataName, p
             $(document).off('touchend', touchend);
         }
     });
-};
+}
 
 /*
     9.1、react项目中用到
@@ -8488,7 +8462,7 @@ function changeState(This, key, value) {
     This.setState({
         [key]: [value],
     });
-};
+}
 
 //react单选框
 //reactRadio(this,'radioValue',ev)
@@ -8499,7 +8473,7 @@ function reactRadio(This, key, ev) {
     This.setState({
         [key]: checked ? value : '',
     });
-};
+}
 
 //react复选框
 //普通：reactCheck(this,'checkArr',ev)
@@ -8536,7 +8510,7 @@ function reactCheck(This, key, ev, allCheck, prefix, checkLength, isAllCheck) {
         [allCheck]: allCheckValue,
         [key]: checkArr,
     });
-};
+}
 
 //react下拉框
 //单选：Type(key)=='string'
@@ -8555,7 +8529,7 @@ function reactSelect(This, key, ev) {
     This.setState({
         [key]: Type(This.state[key]) == 'array' ? optionArr : value,
     });
-};
+}
 
 /*
     10.1、严格模式使用规则
@@ -8637,7 +8611,7 @@ function useStrictRule() {
                         result += num;
                         num++;
                         return arguments.callee(num, result);
-                    };
+                    }
                     console.log(foo(1));
                 },
             },
@@ -8717,7 +8691,7 @@ function useStrictRule() {
 
                     function foo(a, a) {
                         console.log(a);
-                    };
+                    }
                     foo(1, 2);
                 },
             },
@@ -8741,7 +8715,7 @@ function useStrictRule() {
                         arguments[1] = 3
                         console.log(arguments);
                         console.log(b);
-                    };
+                    }
                     foo(1, 2);
                 },
             },
@@ -8753,7 +8727,7 @@ function useStrictRule() {
                     if (1) {
                         function foo() {
                             console.log(111);
-                        };
+                        }
                     }
                     foo();
                 },
@@ -8782,7 +8756,7 @@ function useStrictRule() {
 
                     function foo() {
                         console.log(this);
-                    };
+                    }
                     foo.call(1);
                 },
             },
@@ -8793,7 +8767,7 @@ function useStrictRule() {
 
                     function foo() {
                         console.log(this);
-                    };
+                    }
                     foo.call(null);
                     foo.call(undefined);
                 },
@@ -8803,4 +8777,4 @@ function useStrictRule() {
 
     console.log(rule);
     return rule['b-notes'];
-};
+}
