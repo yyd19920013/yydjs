@@ -3672,10 +3672,10 @@ function UnReload(option) {
 UnReload.prototype = {
     start: function (option) {
         var This = this;
+
         clearInterval(option.obj.timer);
         option.obj.classList.add('active');
         option.obj.innerHTML = ((option.num + 1) || 60) - option.iNum + (option.str2 || 's后重新发送');
-
         option.obj.timer = setInterval(function () {
             option.iNum++;
 
