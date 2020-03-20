@@ -1569,24 +1569,20 @@ function amountFormat0(value, dLength, cLength) {
     for (var i = 0; i < dLength; i++) {
         zero += '0';
     }
-
     if (Type(value) == 'number') {
         value += '';
         value = value.split('.');
         value[0] = value[0].split('');
         value[1] = (value[1] || '') + zero;
         value[1] = value[1].substring(0, dLength);
-
         arr.unshift('.', value[1]);
         while (value[0].length > cLength) {
             arr.unshift(',', value[0].splice(value[0].length - cLength, cLength).join(''));
         }
-
         arr = value[0].join('') + arr.join('');
     } else {
         arr = oldValue;
     }
-
     if (arr && arr.length) arr = arr.replace('-,', '-');
     return arr;
 }
@@ -1655,6 +1651,7 @@ function computed(num1, operator, num2) {
 function getPrefix() {
     var style = document.documentElement.style || document.body.style;
     var arr = ['webkit', 'khtml', 'moz', 'ms', 'o'];
+
     for (var i = 0; i < arr.length; i++) {
         if (typeof style[arr[i] + 'Transition'] == 'string') {
             document.title = '内核前缀：-' + arr[i];
@@ -1751,7 +1748,6 @@ function selectText(endFn) {
         text = selectedObj.text;
         html = selectedObj.htmlText;
     }
-
     endFn && endFn({
         selectedObj: selectedObj, //Selection对象
         rangeObj: rangeObj, //range对象
@@ -1773,16 +1769,13 @@ function selectText(endFn) {
             } else if (oTag.style.display == 'block') {
                 oTag.style.display = 'unset';
             }
-
             for (var attr in objProperty) {
                 oTag[attr] = objProperty[attr];
             }
             for (var attr in objAttribute) {
                 oTag.setAttribute(attr, objAttribute[attr]);
             }
-
             execCommandFn('3_7');
-
             if (!insert && oRange && text) {
                 oTag.innerText = text;
                 selectedObj.deleteFromDocument();
@@ -1843,7 +1836,6 @@ function selectText(endFn) {
                         cssText = JSON.parse(cssText);
                     }
                 } catch (e) {}
-
                 result = Object.assign({}, result, cssText || {});
                 for (var i = 0; i < parent.childNodes.length; i++) {
                     getCssTextFn(parent.childNodes[i]);
@@ -1992,7 +1984,6 @@ function hasApp(url, index, endFn) {
         dom.style.display = 'none';
         document.body.appendChild(dom);
     }
-
     if (url) {
         createIframe(oIframe, url);
         setTimeout(function () {
@@ -2001,13 +1992,11 @@ function hasApp(url, index, endFn) {
     } else {
         createIframe(oIframe, agreementArr[index]);
     }
-
     setTimeout(function () {
         var oNow = +new Date();
         var iDiff = oNow - oDate;
 
         hidden = document.hidden || document.webkitHidden;
-
         if (iDiff < delay + threshold) {
             exist = false;
             if (hidden) {
@@ -2144,7 +2133,6 @@ function webviewRefresh() {
         window.webviewRefresh();
         return;
     }
-
     var rPath = '';
     var pathname = window.location.pathname;
     var search = '';
@@ -2154,19 +2142,16 @@ function webviewRefresh() {
     var searchStr = '';
 
     searchJson.v = v;
-
     for (var attr in searchJson) {
         searchStr += attr + '=' + searchJson[attr] + '&';
     }
-
     var lastIndex = searchStr.lastIndexOf('&');
+
     if (lastIndex == searchStr.length - 1) {
         searchStr = searchStr.substring(0, lastIndex);
     }
     search += '?' + searchStr;
-
     rPath = pathname + search + hash;
-
     window.location.reload();
     setTimeout(function () {
         window.location.replace(rPath);
@@ -2189,7 +2174,6 @@ function hasPrevHistoryPage() {
         sStore.set('hasPrevHistoryPageHistoryArr', historyArr);
         sStore.set('hasPrevHistoryPageHistoryLength', historyLength);
     };
-
     return {
         record: function () {
             function getPage(number) {
@@ -2197,7 +2181,6 @@ function hasPrevHistoryPage() {
 
                 return index != -1 ? historyArr[index] : '';
             }
-
             setTimeout(function () {
                 var href = window.location.href;
                 var length = window.history.length;
@@ -2209,14 +2192,12 @@ function hasPrevHistoryPage() {
                     }
                     historyArr.push(href);
                     historyLength.push(length);
-
                     switch (length) {
                         case 1:
                         case 2:
                             historyArr[length - 1] = href;
                             break;
                     }
-
                     if (historyArr.length >= 4) {
                         var currentPage = historyArr[historyArr.length - 1];
                         var currentLength = historyLength[historyLength.length - 1];
@@ -2237,7 +2218,6 @@ function hasPrevHistoryPage() {
 
                 return index != -1 ? historyArr[index] : '';
             }
-
             setTimeout(function () {
                 var bool = true;
                 var length = window.history.length;
@@ -2254,7 +2234,6 @@ function hasPrevHistoryPage() {
                         bool = false;
                     }
                 }
-
                 endFn && endFn(bool);
             });
         },
@@ -2285,7 +2264,6 @@ function getFullscreenAPI(obj) {
             break;
         }
     }
-
     if (api) {
         api.enter = function () { dE[api.enterK]() };
         api.exit = function () { return document[api.exitK]() };
@@ -2325,7 +2303,6 @@ function notification(config, eventConfig) {
 
     config.title = config.title || '无标题';
     config.body = config.body || '无内容';
-
     if (window.Notification) {
         if (Notification.permission != 'denied') {
             Notification.requestPermission(function (status) {
@@ -2382,7 +2359,6 @@ function getUserMedia(options) {
 
     oCanvas.width = iWidth;
     oCanvas.height = iHeight;
-
     window.navigator.getMedia = window.navigator.getUserMedia;
     for (var i = 0; i < prefixArr.length; i++) {
         if (!window.navigator.getMedia) {
@@ -2404,7 +2380,6 @@ function getUserMedia(options) {
     function error(error) {
         console.log(error);
     }
-
     window.navigator.getMedia({
         video: true,
         audio: false,
