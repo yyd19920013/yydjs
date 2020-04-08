@@ -1605,39 +1605,44 @@ function formatMobile(val) {
 //num1（要进行运算的第一个数字）
 //operator（运算符号,+,-,*,/）
 //num2（要进行运算的第二个数字）
+/*
+    测试例子：
+    console.log(19044.009 + 0.01, computed(19044.009, '+', 0.01));
+    console.log(19044.002 - 0.01, computed(19044.002, '-', 0.01));
+    console.log(19044.003 * 0.05, computed(19044.003, '*', 0.05));
+    console.log(19044.001 / 0.05, computed(19044.001, '/', 0.05));
+    console.log(11 + 22, computed(11, '+', 22));
+*/
 function computed(num1, operator, num2) {
-    var length1 = (num1 + '').split('.')[1];
-    length1 = length1 ? length1.length : 0;
-    var length2 = (num2 + '').split('.')[1];
-    length2 = length2 ? length2.length : 0;
-
+    var numArr1 = (num1 + '').split('.');
+    var numArr2 = (num2 + '').split('.');
+    var numArr11 = numArr1[1] || 0;
+    var numArr21 = numArr2[1] || 0;
+    var length1 = numArr11 ? numArr11.length : 0;
+    var length2 = numArr21 ? numArr21.length : 0;
     var integer1 = Math.pow(10, length1);
     var integer2 = Math.pow(10, length2);
     var iMax = Math.max(integer1, integer2);
+    var diffInteger1 = iMax / integer1;
+    var diffInteger2 = iMax / integer2;
+    var decimals1 = +numArr11 * diffInteger1;
+    var decimals2 = +numArr21 * diffInteger2;
     var result = '';
 
+    num1 = numArr1[0] * iMax + decimals1;
+    num2 = numArr2[0] * iMax + decimals2;
     switch (operator) {
         case '+':
-            num1 = num1 * iMax;
-            num2 = num2 * iMax;
             result = (num1 + num2) / iMax;
             break;
         case '-':
-            num1 = num1 * iMax;
-            num2 = num2 * iMax;
             result = (num1 - num2) / iMax;
             break;
         case '*':
-            num1 = num1 * integer1;
-            num2 = num2 * integer2;
-            result = (num1 * num2) / integer1;
-            result = result / integer2;
+            result = (num1 * num2) / (iMax * iMax);
             break;
         case '/':
-            num1 = num1 * integer1;
-            num2 = num2 * integer2;
-            result = (num1 / num2) / integer1;
-            result = result / integer2;
+            result = num1 / num2;
             break;
     }
     return result;
@@ -2296,17 +2301,16 @@ function getFullscreenAPI(obj) {
 
     Notification.close()（关闭通知的方法）
 */
-function notification(config, eventConfig) {
+function notification(config, eventConfig, getNotification) {
     var config = config || {};
     var eventConfig = eventConfig || {};
-    var oN = null;
 
     config.title = config.title || '无标题';
     config.body = config.body || '无内容';
     if (window.Notification) {
         if (Notification.permission != 'denied') {
             Notification.requestPermission(function (status) {
-                oN = new Notification(config.title, config);
+                var oN = new Notification(config.title, config);
 
                 bind(oN, 'click', function () {
                     window.focus();
@@ -2316,6 +2320,7 @@ function notification(config, eventConfig) {
                         eventConfig[attr](ev, oN);
                     });
                 }
+                getNotification && getNotification(oN);
             });
         } else {
             console.log('用户拒绝显示通知');
@@ -2323,7 +2328,6 @@ function notification(config, eventConfig) {
     } else {
         console.log('你的浏览器不支持通知');
     }
-    return oN;
 }
 
 //利用getUserMedia和canvas裁切视频并保存图片
@@ -7090,6 +7094,17 @@ function WXSDK(config, type, params, readyFn) {
     6.1、各种参考函数
 */
 
+//判断是否为0和正负0
+function isZero(num) {
+    var resultArr = ['nonzero', 'plusZero', 'minusZero'];
+    var result = 'nonzero';
+
+    if (num == 0) {
+        result = 1 / num > 0 ? 'plusZero' : 'minusZero';
+    }
+    return result;
+}
+
 //foreach改良(加上this.break()方法用来跳出循环)
 function foreach(arr, fn) {
     var oError = new Error('StopIteration');
@@ -7781,120 +7796,173 @@ function removeEnd(obj) {
     7.1、排序算法
 */
 
-//冒泡排序法（万次排序200ms）
+//冒泡排序法（1万个数据排序平均200ms）
 //fn为对比值大小的函数，function(a,b){return b-a;}
 //算法描述：数组往后作对比，前一个值如果小于后一个值，则交换位置（升序）
 function bubbleSort(arr, fn) {
+    var arr = arr.slice();
+
     for (var i = 0; i < arr.length; i++) {
         for (var j = 0; j < arr.length - i - 1; j++) {
             if (fn(arr[j], arr[j + 1]) < 0) {
-                var oCurrent = arr[j];
+                var temp = arr[j];
 
                 arr[j] = arr[j + 1];
-                arr[j + 1] = oCurrent;
+                arr[j + 1] = temp;
             }
         }
     }
+    return arr;
 }
 
-//选择排序法（万次排序160ms）
-//bool（false或不传，从小到大，true，从大到小）
+//选择排序法（1万个数据排序平均160ms）
+//bool（false或不传升序，true降序）
 //算法描述：每次取出数组的最小值按顺序放入数组（升序）
 function selectSort(arr, bool) {
-    var originArr = [].concat(arr);
+    var arr = arr.slice();
+    var originArr = arr.slice();
 
-    function arrGetValue(index, key) {
-        var value = Math[key].apply(null, originArr);
+    function arrGetValue(index) {
+        var value = Math.min.apply(null, originArr);
 
         originArr.splice(originArr.indexOf(value), 1);
         arr[index] = value;
     }
     for (var i = 0; i < arr.length; i++) {
-        arrGetValue(i, !bool ? 'min' : 'max');
+        arrGetValue(i);
     }
-};
+    if (bool) arr.reverse();
+    return arr;
+}
 
-//插入排序法（万次排序100ms）
-//bool（false或不传，从小到大，true，从大到小）
+//插入排序法（1万个数据排序平均50ms）
+//bool（false或不传升序，true降序）
 //算法描述：从索引1开始，数组往前做对比，如果数组当前索引的值比前一个索引的值小，则替换该索引的值为前一个值，小值往前插入（升序）
 function insertSort(arr, bool) {
+    var arr = arr.slice();
+
     for (var i = 1; i < arr.length; i++) {
         var temp = arr[i];
 
-        for (var j = i; j > 0 && (!bool ? temp < arr[j - 1] : temp > arr[j - 1]); j--) {
+        for (var j = i; j > 0 && temp < arr[j - 1]; j--) {
             arr[j] = arr[j - 1];
         }
         arr[j] = temp;
     }
+    if (bool) arr.reverse();
+    return arr;
 }
 
-//希尔排序法（万次排序40ms）
-//bool（false或不传，从小到大，true，从大到小）
+//希尔排序法（1万个数据排序平均30ms）
+//bool（false或不传升序，true降序）
 //算法描述：插入排序的优化版，对比值先用比较大的间隔，到最后再用插入排序，减少很多位置交换的情况
 function shellSort(arr, bool) {
+    var arr = arr.slice();
     var gaps = [5, 3, 1];
 
     for (var i = 0; i < gaps.length; i++) {
         for (var j = gaps[i]; j < arr.length; j++) {
             var temp = arr[j];
 
-            for (var k = j; k >= gaps[i] && (!bool ? temp < arr[k - gaps[i]] : temp > arr[k - gaps[i]]); k -= gaps[i]) {
+            for (var k = j; k >= gaps[i] && temp < arr[k - gaps[i]]; k -= gaps[i]) {
                 arr[k] = arr[k - gaps[i]];
             }
             arr[k] = temp;
         }
     }
+    if (bool) arr.reverse();
+    return arr;
 }
 
-//快速排序法（万次排序20ms）
-//bool（false或不传，从小到大，true，从大到小）
+//快速排序法（1万个数据排序平均50ms）
+//bool（false或不传升序，true降序）
 //注意：排序结果是return出来的
 //算法描述：以数组第0个为基准值，分出一个比该值小的数组和比该值大的数组，分别递归小值数组和大值数组，递归完成之后把小值数组、基准值和大值数组合并
 function quickSort(arr, bool) {
-    if (arr.length == 0) return [];
-    var minArr = [];
-    var maxArr = [];
-    var basicValue = arr[0];
+    var arr = arr.slice();
 
-    for (var i = 1; i < arr.length; i++) {
-        if (!bool ? arr[i] < basicValue : arr[i] > basicValue) {
-            minArr.push(arr[i]);
-        } else {
-            maxArr.push(arr[i]);
+    function getQuickArr(arr) {
+        if (arr.length == 0) return [];
+        var lArr = [];
+        var rArr = [];
+        var basicValue = arr[0];
+
+        for (var i = 1; i < arr.length; i++) {
+            if (arr[i] < basicValue) {
+                lArr.push(arr[i]);
+            } else {
+                rArr.push(arr[i]);
+            }
         }
+        return [].concat(getQuickArr(lArr), basicValue, getQuickArr(rArr));
     }
-    return quickSort(minArr, bool).concat(basicValue, quickSort(maxArr, bool));
+    arr = getQuickArr(arr, bool);
+    if (bool) arr.reverse();
+    return arr;
 }
 
-//归并排序法（万次排序10ms）
-//bool（false或不传，从小到大，true，从大到小）
-//算法描述：数组拆分成子数组，然后子数组进行排序合并，直到合成最终排序完成的数组，用到哨兵值的技巧
+//归并排序递归法（自上而下的递归,1万个数据排序平均60ms）
+//bool（false或不传升序，true降序）
+//算法描述：数组拆分两个数组，然后两个子数组进行排序再合并，递归进行此操作，直到合成最终排序完成的数组
 function mergeSort(arr, bool) {
+    var arr = arr.slice();
+
+    function mergeArr(lArr, rArr) {
+        var result = [];
+
+        while (lArr.length || rArr.length) {
+            if (lArr.length && rArr.length) {
+                result.push(lArr[0] < rArr[0] ? lArr.shift() : rArr.shift());
+            } else if (lArr.length) {
+                result.push(lArr.shift());
+            } else if (rArr.length) {
+                result.push(rArr.shift());
+            }
+        }
+        return result;
+    }
+
+    function getMergeArr(arr) {
+        if (arr.length < 2) return arr;
+        var middle = Math.floor(arr.length / 2);
+        var lArr = arr.slice(0, middle);
+        var rArr = arr.slice(middle);
+
+        return mergeArr(getMergeArr(lArr), getMergeArr(rArr));
+    }
+    arr = getMergeArr(arr);
+    if (bool) arr.reverse();
+    return arr;
+}
+
+//归并排序迭代法（自下而上的迭代,1万个数据排序平均10ms）
+//bool（false或不传升序，true降序）
+//算法描述：数组拆分成多个小的子数组，然后子数组进行排序再合并，迭代进行，拆分的间隔逐渐变大，直到合成最终排序完成的数组，用到哨兵值的技巧
+function mergeSort1(arr, bool) {
+    var arr = arr.slice();
+
     function mergeArr(arr, l, sL, r, sR) {
         var lArr = new Array(sL - l + 1);
         var rArr = new Array(sR - r + 1);
         var iCount = '';
         var m = 0;
         var n = 0;
-        var sentryValue = !bool ? +Infinity : -Infinity;
 
         iCount = l;
         for (var i = 0; i < lArr.length - 1; i++) {
             lArr[i] = arr[iCount];
             iCount++;
         }
-
         iCount = r;
         for (var i = 0; i < rArr.length - 1; i++) {
             rArr[i] = arr[iCount];
             iCount++;
         }
-
-        lArr[lArr.length - 1] = sentryValue;
-        rArr[rArr.length - 1] = sentryValue;
+        lArr[lArr.length - 1] = +Infinity;
+        rArr[rArr.length - 1] = +Infinity;
 
         for (var i = l; i < sR; i++) {
-            if (!bool ? lArr[m] <= rArr[n] : lArr[m] >= rArr[n]) {
+            if (lArr[m] <= rArr[n]) {
                 arr[i] = lArr[m];
                 m++
             } else {
@@ -7904,23 +7972,177 @@ function mergeSort(arr, bool) {
         }
     }
 
-    if (arr.length < 2) return;
-    var step = 1;
-    var iL = '';
-    var iR = '';
+    function getMergeArr() {
+        var step = 1;
+        var iL = '';
+        var iR = '';
 
-    while (step < arr.length) {
-        iL = 0;
-        iR = step;
+        while (step < arr.length) {
+            iL = 0;
+            iR = step;
 
-        while (iR + step <= arr.length) {
-            mergeArr(arr, iL, iL + step, iR, iR + step);
-            iL = iR + step;
-            iR = iL + step;
+            while (iR + step <= arr.length) {
+                mergeArr(arr, iL, iL + step, iR, iR + step);
+                iL = iR + step;
+                iR = iL + step;
+            }
+            if (iR < arr.length) mergeArr(arr, iL, iL + step, iR, arr.length);
+            step *= 2;
         }
-        if (iR < arr.length) mergeArr(arr, iL, iL + step, iR, arr.length);
-        step *= 2;
     }
+    getMergeArr();
+    if (bool) arr.reverse();
+    return arr;
+}
+
+//堆排序（1万个数据排序平均20ms）
+//bool（false或不传升序，true降序）
+//算法描述：利用堆的概念来排序的选择排序
+function heapSort(arr, bool) {
+    var arr = arr.slice();
+    var length = arr.length;
+
+    //交互数组中两个索引的值
+    function swap(arr, i, j) {
+        var temp = arr[i];
+
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+    //堆调整
+    function heapify(arr, i) {
+        var left = 2 * i + 1;
+        var right = 2 * i + 2;
+        var maxValue = i;
+
+        if (left < length && arr[left] > arr[maxValue]) {
+            maxValue = left;
+        }
+        if (right < length && arr[right] > arr[maxValue]) {
+            maxValue = right;
+        }
+        if (maxValue != i) {
+            swap(arr, i, maxValue);
+            heapify(arr, maxValue);
+        }
+    }
+    //建立大顶堆
+    function buildMaxHeap(arr) {
+        for (var i = Math.floor(length / 2); i >= 0; i--) {
+            heapify(arr, i);
+        }
+    }
+    buildMaxHeap(arr);
+    for (var i = arr.length - 1; i > 0; i--) {
+        swap(arr, 0, i);
+        length--;
+        heapify(arr, 0);
+    }
+    if (bool) arr.reverse();
+    return arr;
+}
+
+//计数排序（1万个数据排序平均30ms）
+//bool（false或不传升序，true降序）
+//算法描述：计数排序的核心在于将输入的数据值转化为键存储在额外开辟的数组空间中。作为一种线性时间复杂度的排序，计数排序要求输入的数据必须是有确定范围的整数。
+function countingSort(arr, bool) {
+    var arr = arr.slice();
+    var maxValue = Math.max.apply(null, arr);
+    var bucket = new Array(maxValue + 1);
+    var sortedIndex = 0;
+
+    //先把数组相同值的数量统计在桶数组对应大小的索引里
+    for (var i = 0; i < arr.length; i++) {
+        if (!bucket[arr[i]]) {
+            bucket[arr[i]] = 0;
+        }
+        bucket[arr[i]]++;
+    }
+    //再把数组的值根据桶数组的索引依次放入，并减去桶数组里的计数，最终得出排序好的数组
+    for (var j = 0; j < maxValue + 1; j++) {
+        while (bucket[j] > 0) {
+            arr[sortedIndex++] = j;
+            bucket[j]--;
+        }
+    }
+    if (bool) arr.reverse();
+    return arr;
+}
+
+//桶排序（1万个数据排序平均30ms）
+//bool（false或不传升序，true降序）
+//算法描述：桶排序是计数排序的升级版。它利用了函数的映射关系，高效与否的关键就在于这个映射函数的确定，桶排序要求输入的数据必须是有确定范围的整数。。
+function bucketSort(arr, bool) {
+    if (arr.length == 0) return arr;
+    var arr = arr.slice();
+    var minValue = Math.min.apply(null, arr);
+    var maxValue = Math.max.apply(null, arr);
+
+    //桶的初始化
+    var bucketSize = 5;
+    var bucketCount = Math.floor((maxValue - minValue) / bucketSize) + 1;
+    var buckets = new Array(bucketCount);
+
+    for (var i = 0; i < buckets.length; i++) {
+        buckets[i] = [];
+    }
+    //利用映射函数将数据分配到各个桶中
+    for (var i = 0; i < arr.length; i++) {
+        var bucketIndex = Math.floor((arr[i] - minValue) / bucketSize);
+
+        buckets[bucketIndex].push(arr[i]);
+    }
+    arr.length = 0;
+    for (var i = 0; i < buckets.length; i++) {
+        //对每个桶进行排序，这里使用了插入排序
+        insertSort(buckets[i]);
+        for (var j = 0; j < buckets[i].length; j++) {
+            arr.push(buckets[i][j]);
+        }
+    }
+    if (bool) arr.reverse();
+    return arr;
+}
+
+//基数排序（1万个数据排序平均60ms）
+//bool（false或不传升序，true降序）
+//算法描述：基数排序 vs 计数排序 vs 桶排序
+/*
+    这三种排序算法都利用了桶的概念，但对桶的使用方法上有明显差异：
+    基数排序：根据键值的每位数字来分配桶
+    计数排序：每个桶只存储单一键值
+    桶排序：每个桶存储一定范围的数值
+*/
+function radixSort(arr, bool) {
+    var arr = arr.slice();
+    var maxNumLength = (Math.max.apply(null, arr) + '').length;
+    var counter = [];
+    var mod = 10;
+    var dev = 1;
+
+    for (var i = 0; i < maxNumLength; i++, mod *= 10, dev *= 10) {
+        var pos = 0;
+
+        for (var j = 0; j < arr.length; j++) {
+            var bucket = parseInt((arr[j] % mod) / dev);
+
+            if (!counter[bucket]) {
+                counter[bucket] = [];
+            }
+            counter[bucket].push(arr[j]);
+        }
+        for (var j = 0; j < counter.length; j++) {
+            var value = null;
+
+            if (counter[j]) {
+                while ((value = counter[j].shift()) != null) {
+                    arr[pos++] = value;
+                }
+            }
+        }
+    }
+    if (bool) arr.reverse();
+    return arr;
 }
 
 /*
@@ -8235,7 +8457,7 @@ DList.prototype = {
     }
 }
 
-//链表递归实现约舍夫环
+//链表递归实现约瑟夫环
 function killGame(num, step) {
     var people = new DList();
 
