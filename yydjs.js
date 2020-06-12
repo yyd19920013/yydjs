@@ -924,6 +924,34 @@ var lStore = new Store().init('localStorage');
 //sessionStorage操作
 var sStore = new Store().init('sessionStorage');
 
+//js操作css变量
+var cssVar = {
+    isSupport(callBack) {
+        var isSupported = window.CSS && window.CSS.supports && window.CSS.supports('--a', 0);
+
+        if (isSupported) {
+            return callBack && callBack();
+        } else {
+            console.log('当前浏览器不支持CSS变量');
+        }
+    },
+    set(key, value) {
+        this.isSupport(function () {
+            document.body.style.setProperty('--' + key, value);
+        });
+    },
+    get(key) {
+        return this.isSupport(function () {
+            return document.body.style.getPropertyValue('--' + key).trim();
+        });
+    },
+    remove(key) {
+        return this.isSupport(function () {
+            return document.body.style.removeProperty('--' + key);
+        });
+    },
+};
+
 /*
     1.4、增强函数
 */
@@ -1155,11 +1183,6 @@ function yydCut(obj, posiCut, indexCut, bool) {
     1.5、时间日期处理
 */
 
-//时间变成两位数
-function toTwo(n) {
-    return +n < 10 ? '0' + n : n + '';
-}
-
 //补零函数
 //value（需要补零的值）
 //length（需要补零的长度(数量)）
@@ -1190,7 +1213,7 @@ function normalDate(oDate) {
     var oDate = oDate;
     var reg = /\-+/g;
 
-    if (Type(oDate) == 'string') {
+    if (typeof (oDate) == 'string') {
         oDate = oDate.split('.')[0]; //解决ie浏览器对yyyy-MM-dd HH:mm:ss.S格式的不兼容
         oDate = oDate.replace(reg, '/'); //解决苹果浏览器对yyyy-MM-dd格式的不兼容性
     }
@@ -1268,12 +1291,49 @@ function getSexAndDob(identity) {
     a a b b c c y y m m d d x x s
     18位的号码：
     a a b b c c y y y y m m d d x x s p
+
+    使用示例：
+    检查身份证号码：
+    idCardNo.checkIdCardNo('152601198304285042');//true，表示验证通过
+    获取身份证信息：
+    idCardNo.getIdCardNoInfo('152601198304285042')//{"city":"内蒙古","dob":"1983-3-28","sex":"女","age":"37岁","cityCode":"15","dobCode":"19830428","sexCode":"4","ageCode":"37"}
+    转换15位身份证为18位
+    idCardNo.normalIdCardNo('130503670401001')//130503196704010016
 */
 var idCardNo = {
     citys: { 11: '北京', 12: '天津', 13: '河北', 14: '山西', 15: '内蒙古', 21: '辽宁', 22: '吉林', 23: '黑龙江', 31: '上海', 32: '江苏', 33: '浙江', 34: '安徽', 35: '福建', 36: '江西', 37: '山东', 41: '河南', 42: '湖北', 43: '湖南', 44: '广东', 45: '广西', 46: '海南', 50: '重庆', 51: '四川', 52: '贵州', 53: '云南', 54: '西藏', 61: '陕西', 62: '甘肃', 63: '青海', 64: '宁夏', 65: '新疆', 71: '台湾', 81: '香港', 82: '澳门', 91: '国外' }, //省,直辖市代码
     powers: ['7', '9', '10', '5', '8', '4', '2', '1', '6', '3', '7', '9', '10', '5', '8', '4', '2'], //每位加权因子
     lastCodes: ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'], //第18位校检码
+    normalDate: function (oDate) { //正常化日期
+        var oDate = oDate;
+        var reg = /\-+/g;
+
+        if (typeof (oDate) == 'string') {
+            oDate = oDate.split('.')[0]; //解决ie浏览器对yyyy-MM-dd HH:mm:ss.S格式的不兼容
+            oDate = oDate.replace(reg, '/'); //解决苹果浏览器对yyyy-MM-dd格式的不兼容性
+        }
+        oDate = new Date(oDate);
+        return oDate;
+    },
+    getAge: function (date, real) { //获取年龄
+        var bDate = this.normalDate(date);
+        var bYear = bDate.getFullYear();
+        var bMonth = bDate.getMonth();
+        var bDay = bDate.getDate();
+        var nDate = new Date();
+        var nYear = nDate.getFullYear();
+        var nMonth = nDate.getMonth();
+        var nDay = nDate.getDate();
+        var dYear = nYear - bYear;
+        var dMonth = (nMonth - bMonth) / 12;
+        var dDay = (nDay - bDay) / 365;
+        var diff = dYear + dMonth + dDay;
+        var age = diff > 0 ? (real ? diff : Math.floor(diff)) : 0;
+
+        return age;
+    },
     normalIdCardNo: function (idCardNo) { //格式化15身份证号码为18位
+        var idCardNo = idCardNo + '';
         var id17 = idCardNo.substring(0, 6) + '19' + idCardNo.substring(6);
 
         return idCardNo.length == 15 ? id17 + this.getLastCode(id17) : idCardNo;
@@ -1300,14 +1360,13 @@ var idCardNo = {
         var bYear = dobCode.substring(0, 4);
         var bMonth = dobCode.substring(4, 6);
         var bDay = dobCode.substring(6);
-        var bDate = new Date(bYear, bMonth - 1, bDay);
-        var dob = dateFormat0(bDate, 'yyyy-MM-dd');
-        var ageCode = getAge(dob) + '';
+        var dob = `${bYear}-${bMonth - 1}-${bDay}`;
+        var ageCode = this.getAge(dob) + '';
         var idCardNoInfo = {
             city: this.citys[cityCode],
             dob: dob,
             sex: sexCode & 1 == 1 ? '男' : '女',
-            age: getAge(dob) + '岁',
+            age: ageCode + '岁',
             cityCode: cityCode,
             dobCode: dobCode,
             sexCode: sexCode,
@@ -1455,8 +1514,11 @@ function secondFormat0(seconds, fmt, adjustFmt) {
     dateFormat0(new Date(),'y-M-d h:m:s.S/q'); //2018-12-21 17:24:33.666/4
 */
 function dateFormat0(oDate, fmt) {
-    var fmt = fmt || 'yyyy/MM/dd hh:mm:ss';
-    var oDate = normalDate(oDate || new Date());
+    var toTwo = function (n) { //时间变成两位数
+        return +n < 10 ? '0' + n : n + '';
+    }
+    var fmt = fmt || 'yyyy-MM-dd hh:mm:ss';
+    var oDate = normalDate(oDate || new Date()); //不传会默认为当前时间
     var date = {
         'y+': oDate.getFullYear(), //年
         'M+': oDate.getMonth() + 1, //月
@@ -1678,6 +1740,17 @@ function keyCode() {
         oP.innerHTML = '按键' + ':' + aString + ' ' + '键值' + ':' + ev.keyCode;
         document.body.appendChild(oP);
     };
+}
+
+//复制文字到剪切板，输入框和元素都可以兼容
+//obj（需要复制的元素）
+//command（扩展命令，默认是复诊，可以剪切'cut'、删除'delete'）
+function copyText(obj, command) {
+    var command = command || 'copy';
+
+    window.getSelection().selectAllChildren(obj);
+    obj.select && obj.select();
+    document.execCommand(command);
 }
 
 //execCommand对文档执行预定义命令
@@ -1933,6 +2006,35 @@ function preview(oInp, oImg) {
             oImg[this.index].src = windowUrl.createObjectURL(this.files[0]);
         };
     }
+}
+
+//blob文件下载
+//blobData（blob数据）
+//fileName（文件名）
+//suffix（转化文件的后缀名称）
+function blobFileDownload(blobData, fileName, suffix) {
+    var typeJson = {
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        dotx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
+        pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        ppsx: 'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
+        potx: 'application/vnd.openxmlformats-officedocument.presentationml.template',
+        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        xltx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
+    };
+    var suffix = suffix || 'docx';
+    var type = typeJson[suffix] + ';charset=utf-8';
+    var blob = new Blob([blobData], { type: type });
+    var oA = document.createElement('a');
+    var href = window.URL.createObjectURL(blob);
+
+    oA.href = href;
+    oA.download = fileName;
+    oA.style.display = 'none';
+    document.body.appendChild(oA);
+    oA.click();
+    document.body.removeChild(oA);
+    window.URL.revokeObjectURL(href);
 }
 
 //判断是否是手机浏览器
@@ -4395,7 +4497,6 @@ hashChangeCrossDomain.prototype = {
 
         oIframe.style.display = this.showIframe;
         oIframe.src = url;
-
         return oIframe;
     },
     getSearch: function (key, str) {
@@ -4434,7 +4535,6 @@ hashChangeCrossDomain.prototype = {
 
         window.hashChangeCrossDomainFn = endFn;
         document.body.appendChild(this.onIframe);
-
         return this;
     },
     emit: function (url, data) { //url为同域代理页面的url，data为跨域页面要发送的数据
@@ -4520,7 +4620,6 @@ postMessageCrossDomain.prototype = {
 
         oIframe.style.display = this.showIframe;
         oIframe.src = url;
-
         return oIframe;
     },
     on: function (endFn) { //endFn为回调函数，回参为跨域页面发送的数据
@@ -7465,6 +7564,77 @@ function yydModel() {
     return objMap;
 }
 
+//创建一个迭代器，可用for..of循环
+//doneFn（回参是res，return true代表结束，return false代表继续迭代）
+//nextValFn（回参是res，需要return返回每次迭代的结果 ）
+/*
+    例子：
+    创建一个输出0-9的迭代器，并且遍历
+    var iterator = createIterator();
+
+    for (var item of iterator) {
+        console.log(item);
+    }
+*/
+function createIterator(doneFn, nextValFn) {
+    var res = { count: 0, value: 0 };
+    var defaultDoneFn = function (res) {
+        res.count++;
+        return res.count > 10;
+    };
+    var defaultNextValFn = function (res) {
+        return res.value++;
+    };
+
+    return {
+        [Symbol.iterator]: function () { return this; },
+        next: function () {
+            return { done: doneFn ? doneFn(res) : defaultDoneFn(res), value: nextValFn ? nextValFn(res) : defaultNextValFn(res) };
+        },
+    };
+}
+
+//递归执行生成器(yield出Promise的生成器)
+//gen（生成器函数）
+/*
+    function createFn(msec, num) {
+        return new Promise(function (resolve, reject) {
+            setTimeout(function () {
+                return resolve(num);
+            }, msec);
+        });
+    };
+
+    function* foo() {
+        let res1 = yield createFn(1000, 1);
+        console.log(res1);
+        let res2 = yield createFn(2000, 2);
+        console.log(res2);
+        let res3 = yield createFn(3000, 3);
+
+        console.log(res1, res2, res3);
+    };
+    run(foo);
+*/
+function run(gen) {
+    var args = [].slice.call(arguments, 1);
+    var it = gen.apply(this, args);
+
+    return Promise.resolve().then(function handleNext(value) {
+        var next = it.next(value);
+
+        return (function handleResult(next) {
+            if (next.done) {
+                return next.value;
+            } else {
+                return Promise.resolve(next.value).then(handleNext, function handleErr(err) {
+                    return Promise.resolve(it.throw(err)).then(handleResult);
+                });
+            }
+        })(next);
+    });
+}
+
 //实现promise对象
 function Prom(fn) {
     this.status = 'unchanged';
@@ -7791,6 +7961,23 @@ function removeEnd(obj) {
     unbind(obj, 'transitionend', transitionEndFn);
     unbind(obj, 'webkitTransitionEnd', transitionEndFn);
 }
+
+//将<, >, &, “进行转义
+function escapeHtml(str) {
+    return str.replace(/[<>&"]/g, function (match) {
+        switch (match) {
+            case '<':
+                return '&lt;';
+            case '>':
+                return '&gt;';
+            case '&':
+                return '&amp;';
+            case '"':
+                return '&quot;';
+        }
+    });
+}
+
 
 /*
     7.1、排序算法
