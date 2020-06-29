@@ -3695,7 +3695,7 @@ function alertss(arr, endFn, errorFn, msec) {
     var errorIndex = -1;
 
     for (var i = 0; i < arr.length; i++) {
-        var condition = !jsonHasKey(arr[i], 'if') || arr[i].if;
+        var condition = !('if' in arr[i]) || arr[i].if;
 
         if (arr[i].reg) {
             if (condition && !arr[i].reg.test(arr[i].value)) {
@@ -4835,7 +4835,7 @@ function allMove(time, obj, json, type, endFn) {
             parseInt(getStyle(obj, attr));
     }
     obj.allMove = setInterval(function () {
-        var changeTime = new Date().getTime() - startTime;
+        var changeTime = +new Date() - startTime;
         var t = time - Math.max(0, time - changeTime);
         for (var attr in json) {
             var value = moveType[type](t, Default[attr], json[attr] - Default[attr], time);
