@@ -519,7 +519,7 @@ function autoEvent(obj, event) {
     if (document.createEvent) {
         var evObj = document.createEvent('MouseEvents');
 
-        evObj.initEvent(event, true, false); //事件的类型、事件是否起泡、是否可以用 preventDefault() 方法取消事件
+        evObj.initEvent(event, true, false); //事件的类型、事件是否冒泡、是否可以用 preventDefault() 方法取消事件
         obj.dispatchEvent(evObj);
     } else if (document.createEventObject) {
         obj.fireEvent(event);
@@ -885,7 +885,6 @@ Store.prototype = {
             default:
                 this.store.setItem(key, value);
         }
-
     },
     get: function (key) {
         var value = this.store.getItem(key);
@@ -977,9 +976,9 @@ function Type(obj) {
     return (typeof obj).toLowerCase();
 }
 
-//判断数据类型的方法（对typeof的增强，11种类型的判断，返回小写字符串）
-function Type1(obj) {
-    var arr = ['null', 'undefined', 'number', 'string', 'boolean', 'nan', 'array', 'object', 'function', 'date', 'regexp'];
+//判断数据类型的方法（对typeof的增强，12种类型的判断，返回小写字符串）
+function TypeAll(obj) {
+    var arr = ['null', 'undefined', 'number', 'string', 'boolean', 'symbol', 'nan', 'array', 'object', 'function', 'date', 'regexp'];
     var t, c, n;
 
     if (obj === null) {
@@ -1065,120 +1064,6 @@ function jsonHasKey(json, key) {
     return key in json;
 }
 
-//判断数组、json、字符串是否所有值都不为空
-function allHaveValue(obj) {
-    var bool = true;
-
-    if (Type(obj) == 'array') {
-        for (var i = 0; i < obj.length; i++) {
-            if (!obj[i] && obj[i] !== 0) {
-                bool = false;
-                break;
-            }
-        }
-    } else if (Type(obj) == 'object') {
-        for (var attr in obj) {
-            if (!obj[attr] && obj[attr] !== 0) {
-                bool = false;
-                break;
-            }
-        }
-    } else {
-        if (!obj && obj !== 0) {
-            bool = false;
-        }
-    }
-    return bool;
-}
-
-//对象截取增强方法，返回截取后的对象，非变异方法(string,array,object)
-//obj(要截取的对象)
-//posiCut(根据[start,end]位置截取)
-//indexCut(按索引删除)
-//bool(为true时，如果是json则按key名删除)
-function yydCut(obj, posiCut, indexCut, bool) {
-    var type = Type(obj);
-    var obj = obj;
-    var json = {};
-    var arr = [];
-    var str = '';
-
-    switch (type) {
-        case 'string':
-            if (Type(posiCut) == 'array') {
-                obj = obj.slice(posiCut[0], posiCut[1] + 1);
-            }
-            if (Type(indexCut) == 'array') {
-                for (var i = 0; i < obj.length; i++) {
-                    json[i] = obj[i];
-                }
-                for (var i = 0; i < indexCut.length; i++) {
-                    delete json[indexCut[i]];
-                }
-                for (var attr in json) {
-                    str += json[attr];
-                }
-                obj = str;
-            }
-            break;
-        case 'array':
-            if (Type(posiCut) == 'array') {
-                obj = obj.slice(posiCut[0], posiCut[1] + 1);
-            }
-            if (Type(indexCut) == 'array') {
-                for (var i = 0; i < obj.length; i++) {
-                    json[i] = obj[i];
-                }
-                for (var i = 0; i < indexCut.length; i++) {
-                    delete json[indexCut[i]];
-                }
-                for (var attr in json) {
-                    arr.push(json[attr]);
-                }
-                obj = arr;
-            }
-            break;
-        case 'object':
-            if (Type(posiCut) == 'array') {
-                for (var attr in obj) {
-                    arr.push(attr);
-                }
-                arr = arr.slice(posiCut[0], posiCut[1] + 1);
-                for (var i = 0; i < arr.length; i++) {
-                    json[arr[i]] = obj[arr[i]];
-                }
-                obj = json;
-            }
-            if (Type(indexCut) == 'array') {
-                if (bool) {
-                    for (var i = 0; i < indexCut.length; i++) {
-                        delete obj[indexCut[i]];
-                    }
-                } else {
-                    arr = [];
-                    json = {};
-                    var json1 = {};
-
-                    for (var attr in obj) {
-                        arr.push(attr);
-                    }
-                    for (var i = 0; i < arr.length; i++) {
-                        json[i] = arr[i];
-                    }
-                    for (var i = 0; i < indexCut.length; i++) {
-                        delete json[indexCut[i]];
-                    }
-                    for (var attr in json) {
-                        json1[json[attr]] = obj[json[attr]];
-                    }
-                    obj = json1;
-                }
-            }
-            break;
-    }
-    return obj;
-}
-
 /*
     1.5、时间日期处理
 */
@@ -1201,8 +1086,8 @@ function zeroFill(value, length, isBehind) {
 
 //算出本月天数
 //getMonth获得的月份是从0开始，要加1
-//下月第0天就是最后一天，-1=倒数第二天，国外月份从0开始,逗号隔开年月日new Date之后月份要大一个月，字符串是正常的
-function manyDay(year, month) {
+//下月第0天就是最后一天，-1=倒数第二天，国外月份从0开始，逗号隔开年月日new Date之后月份要大一个月，字符串是正常的
+function getDays(year, month) {
     var nextMonth = new Date(year, month, 0);
 
     return nextMonth.getDate();
@@ -1333,6 +1218,7 @@ var idCardNo = {
         return age;
     },
     normalIdCardNo: function (idCardNo) { //格式化15身份证号码为18位
+        if (!idCardNo) return '';
         var idCardNo = idCardNo + '';
         var id17 = idCardNo.substring(0, 6) + '19' + idCardNo.substring(6);
 
@@ -1663,9 +1549,14 @@ function formatMobile(val) {
     return val;
 }
 
+//简单解决js处理浮点不正确的问题
+function normalFloat(value) {
+    return parseFloat((value).toFixed(10));
+}
+
 //科学运算（解决js处理浮点不正确的问题）
 //num1（要进行运算的第一个数字）
-//operator（运算符号,+,-,*,/）
+//operator（运算符号,+、-、*、/）
 //num2（要进行运算的第二个数字）
 /*
     测试例子：
@@ -1708,6 +1599,111 @@ function computed(num1, operator, num2) {
             break;
     }
     return result;
+}
+
+//正数大整数加法和乘法运算，用于解决js运算，超过21位会转换成科学计数法，丢失精度的问题（大数建议使用BigInt）
+//输入的数字最好为字符串，返回为字符串类型的数字
+//num1（要进行运算的第一个数字）
+//operator（运算符号,+、*）
+//num2（要进行运算的第二个数字）
+function bigIntComputed(num1, operator, num2) {
+    var arr1 = `${num1}`.split('');
+    var arr2 = `${num2}`.split('');
+    var result = [];
+    var normal = function (arr) {
+        var result = arr.slice().reverse();
+
+        for (var i = 0; i < result.length; i++) {
+            var hign = result[i] >= 10 ? +`${result[i]}`.charAt(0) : 0;
+
+            if (hign > 0) {
+                result[i] %= 10;
+                if (result[i + 1]) {
+                    result[i + 1] += hign;
+                } else {
+                    result[i + 1] = hign;
+                }
+            }
+        }
+        return result.reverse();
+    };
+    var add = function (arr1, arr2) {
+        if (arr1.length == 0) return arr2;
+        if (arr2.length == 0) return arr1;
+        if (num1 == 0) return `${num2}`;
+        if (num2 == 0) return `${num1}`;
+        var arr1 = arr1.slice();
+        var arr2 = arr2.slice();
+        var maxLength = Math.max(arr1.length, arr2.length);
+        var result = [];
+
+        arr1.reverse();
+        arr2.reverse();
+        for (var i = 0; i < maxLength; i++) {
+            var item1 = +arr1[i] || 0;
+            var item2 = +arr2[i] || 0;
+            var total = item1 + item2;
+
+            result.unshift(total);
+        }
+        return normal(result);
+    };
+    var multiply = function (arr1, arr2) {
+        if (arr1.length == 0) return arr2;
+        if (arr2.length == 0) return arr1;
+        if (num1 == 1) return `${num2}`;
+        if (num2 == 1) return `${num1}`;
+        if (num1 == 0 || num2 == 0) return '0';
+        var arr1 = arr1.slice();
+        var arr2 = arr2.slice();
+        var multiplyArr = [];
+        var result = [];
+
+        for (var i = 0; i < arr1.length; i++) {
+            var itemArr = [];
+            var zeroFill = [];
+
+            for (var j = 0; j < arr1.length - 1 - i; j++) {
+                zeroFill.push(0);
+            }
+            for (var j = 0; j < arr2.length; j++) {
+                var item1 = +arr1[i] || 0;
+                var item2 = +arr2[j] || 0;
+                var total = item1 * item2;
+
+                itemArr.push(total);
+            }
+            itemArr = [].concat(itemArr, zeroFill);
+            itemArr = normal(itemArr);
+            multiplyArr.push(itemArr);
+        }
+        for (var i = 0; i < multiplyArr.length; i++) {
+            var item = multiplyArr[i];
+
+            result = normal(add(result, item));
+        }
+        return result;
+    };
+
+    switch (operator) {
+        case '+':
+            result = add(arr1, arr2);
+            break;
+        case '*':
+            result = multiply(arr1, arr2);
+            break;
+    }
+    return typeof (result) == 'string' ? result : result.join('');
+}
+
+//转换科学计数法为字符串（会丢失精度）
+function snToString(num) {
+    num = num.toString(10);
+    if (~num.indexOf('e')) {
+        num = (+num).toLocaleString();
+        num = num.replace(/\$|\,/g, '');
+    }
+    return num;
 }
 
 /*
@@ -2009,6 +2005,7 @@ function preview(oInp, oImg) {
 }
 
 //blob文件下载
+//注意：需要设置请求头responseType: 'blob'
 //blobData（blob数据）
 //fileName（文件名）
 //suffix（转化文件的后缀名称）
@@ -2115,82 +2112,65 @@ function hasApp(url, index, endFn) {
     }, delay);
 }
 
-//返回当前地址?后面的参数的json格式(用于submit提交的str='1'&str1='2'格式)
+//返回键值对的json格式(用于a=1&b=2转换成{a:1,b:2})
+//str（要转换的字符串）
 function strToJson(str) {
-    var str = str || window.location.search;
-    var reg = /&+/g;
-    var reg1 = /=+/g;
-
-    try {
-        if (str.match(/.+=/)) {
-            str = decodeURI(str);
-            str = str.replace('?', '');
-            str = str.replace(reg, '","');
-            str = str.replace(reg1, '":"');
-            str = '{"' + str + '"}';
-            str = JSON.parse(str);
-        } else {
-            str = {};
-        }
-    } catch (e) {
-        str = {};
-    }
-    return str;
-}
-
-//返回当前地址?后面的参数的json格式(用于自己拼接的str={}&str1={}格式)
-//注意要拼接标准json格式
-function strToJson1(str) {
-    var str = str || window.location.search;
-    var reg = /&+/g;
-    var reg1 = /=+/g;
-    var reg2 = /^\?.+$/;
-
-    try {
-        if (str.match(/.+=/)) {
-            str = decodeURI(str);
-            str = reg2.test(str) ? str.replace('?', '"') : '"' + str;
-            str = str.replace(reg, ',"');
-            str = str.replace(reg1, '":');
-            str = '{' + str + '}';
-            str = JSON.parse(str);
-        } else {
-            str = {};
-        }
-    } catch (e) {
-        str = {};
-    }
-    return str;
-}
-
-//传入json，转换成带?的表单格式的url地址
-//json(要转换的对象)
-//arr(要删除json的key的数组)
-//href(要定制的href)
-function jsonToStr(json, arr, href) {
-    var str = '';
-    var json = json || {};
-    var arr = arr || [];
-    var href = href || (window.location.origin + window.location.pathname);
+    var search = window && window.location && window.location.search.replace('?', '');
+    var str = str || search || '';
+    var arr = str.split('&');
+    var json = {};
 
     for (var i = 0; i < arr.length; i++) {
-        delete json[arr[i]];
+        var arr1 = arr[i].split('=');
+        var key = arr1[0];
+        var value = arr1[1];
+
+        json[key] = value;
     }
-    for (var attr in json) {
-        str += attr + '=' + json[attr] + '&';
-    }
-    str = href + '?' + str.substr(0, str.length - 1);
-    return str;
+    return json;
 }
 
-//正则匹配获取search参数
-//不会有报错，比较安全
-function getSearch(key, str) {
-    var reg = new RegExp('(^|&|\\?)' + key + '=([^&]+)(&|$)');
-    var str = str || window.location.search;
-    var matchStr = str.match(reg);
+//返回json的键值对格式(用于{a:1,b:2}转换成a=1&b=2)
+//json（要转换的json）
+function jsonToStr(json) {
+    var json = json || {};
+    var arr = [];
 
-    return matchStr && matchStr[2] || null;
+    for (var attr in json) {
+        arr.push(attr + '=' + json[attr]);
+    }
+    return arr.join('&');
+}
+
+//正则获取键值对中的一组参数
+//arr（要获取的参数的key数组）
+//str（要获取参数的字符串）
+function regGetParams(arr, str) {
+    var search = window && window.location && window.location.search.replace('?', '');
+    var str = str || search || '';
+    var json = {};
+
+    for (var key of arr) {
+        var reg = new RegExp('(^|&|\\?)' + key + '=([^&]+)(&|$)');
+        var matchStr = str.match(reg);
+        var value = matchStr ? matchStr[2] : '';
+
+        json[key] = value;
+    }
+    return json;
+}
+
+//正则获取键值对中的单个参数
+//key（要获取的参数的key）
+//str（要获取参数的字符串）
+function regGetSingle(key, str) {
+    var reg = new RegExp('(^|&|\\?)' + key + '=([^&]+)(&|$)');
+    var search = window && window.location && window.location.search.replace('?', '');
+    var str = str || search || '';
+    var matchStr = str.match(reg);
+    var value = matchStr ? matchStr[2] : '';
+
+    return value;
 }
 
 //微信小程序-获取扫码带过来的参数
@@ -2268,7 +2248,7 @@ function webviewRefresh() {
 //判断页面是否有上一个历史记录页面，即是否可以后退
 /*
     var hasPrevHistoryPageFn=hasPrevHistoryPage();//创建一个闭包函数
-    var hasPrevHistoryPageFn.record();//每次切换页面执行记录方法
+    hasPrevHistoryPageFn.record();//每次切换页面执行记录方法
     hasPrevHistoryPageFn.ableGoBack((bool)=>{//回调中返回是否可以后退的bool值
         console.log(bool);
     });
@@ -2872,6 +2852,14 @@ function axiosWrap(config) {
                     changeLoading(false);
                     config.finally && config.finally(data);
 
+                    if (config.responseType == 'blob') {
+                        if (resolve && (Type(resolve) == 'function')) {
+                            return resolve(data);
+                        } else {
+                            config.success && config.success(data);
+                        }
+                        return;
+                    }
                     if (data.code == config.code) {
                         if (resolve && (Type(resolve) == 'function')) {
                             return resolve(data);
@@ -3214,6 +3202,22 @@ Socket.prototype = {
     1.9、项目中使用
 */
 
+//获取最大版本号
+function getMaxVersion(versions) {
+    var maxItemArr = [];
+
+    for (var item of versions) {
+        var arr = item.split('.');
+
+        for (var i = 0; i < arr.length; i++) {
+            if ((i == 0 || (i >= 1 && arr[i - 1] == maxItemArr[i - 1])) && (!maxItemArr[i] || +arr[i] > maxItemArr[i])) {
+                maxItemArr[i] = +arr[i];
+            }
+        }
+    }
+    return maxItemArr.join('.');
+}
+
 //创建并在body中插入一个脚本
 //src（插入脚本的src）
 //endFn（插入脚本onload时回调函数，会回传一个参数，为true时表示第一次加载）
@@ -3351,12 +3355,13 @@ function limitText(text, length, symbol) {
 //根据后缀名判断文件类型
 function fileType(suffix) {
     var suffix = suffix || '';
-    var typeList = ['image', 'audio', 'video', 'file'];
+    var typeList = ['image', 'audio', 'video', 'excel', 'file'];
     var length = typeList.length - 1;
     var suffixJson = {
         image: ['png', 'jpg', 'jpeg', 'gif', 'ico', 'bmp', 'pic', 'tif'],
         audio: ['mp3', 'ogg', 'wav', 'acc', 'vorbis', 'silk'],
-        video: ['mp4', 'webm', 'avi', 'rmvb', '3gp', 'flv'],
+        video: ['mp4', 'webm', 'avi', 'rmvb', '3gp', 'flv', 'mov', 'rm'],
+        excel: ['xls', 'xlsx'],
     };
     var resultList = [];
 
@@ -4499,12 +4504,14 @@ hashChangeCrossDomain.prototype = {
         oIframe.src = url;
         return oIframe;
     },
-    getSearch: function (key, str) {
+    regGetSingle: function (key, str) {
         var reg = new RegExp('(^|&|\\?)' + key + '=([^&]+)(&|$)');
-        var str = str || window.location.search;
+        var search = window && window.location && window.location.search.replace('?', '');
+        var str = str || search || '';
         var matchStr = str.match(reg);
+        var value = matchStr ? matchStr[2] : '';
 
-        return matchStr && matchStr[2] || null;
+        return value;
     },
     watch: function () {
         var This = this;
@@ -4515,7 +4522,7 @@ hashChangeCrossDomain.prototype = {
 
             if (~posIndex) {
                 var str = hash.substring(posIndex);
-                var hashData = This.getSearch('hashData', str);
+                var hashData = This.regGetSingle('hashData', str);
 
                 hashData = decodeURIComponent(hashData);
                 try {
@@ -6984,7 +6991,7 @@ var WXCode = {
     listen: function (parent) {
         if (!isWeixin()) return;
         var wxCode = cookie.get('wxCode');
-        var code = getSearch('code');
+        var code = regGetSingle('code');
 
         if (!wxCode && code) {
             cookie.set('wxCode', code, 300);
@@ -7192,6 +7199,119 @@ function WXSDK(config, type, params, readyFn) {
 /*
     6.1、各种参考函数
 */
+
+//实现一个call方法
+/*
+    转换一下实现方法就是
+    let mock = {
+      value:1;
+      mockNum:function(){
+         console.log('value',this.value)
+      }
+    }
+    mock.mockNum();
+
+    所以经过上面这个操作的演化而来的结果就是如下步骤：
+    1. 将函数设为一个对象的属性
+    2. 并将这个函数的属性调用
+    3. 删除该函数
+
+    //例子：
+    var obj = { a : 1 };
+
+    function fn(){
+      console.log(this.a);
+    }
+    fn.myCall(obj);//1
+*/
+Function.prototype.myCall = function (context) {
+    var obj = context || window;
+    obj.fn = this; //   这一步可以看做是this其实就指的当前函数。
+    var args = [...arguments].slice(1); // 返回删除第一个元素的数组；
+    var result = obj.fn(...args); // 调用函数
+
+    delete obj.fn;
+    return result;
+}
+
+//实现一个apply方法
+/*
+    //例子：
+    var a = {
+      arr: [1, 2, 3, 4, 5],
+    };
+    function fn(arr) {
+      return this.arr.concat(arr).map((x) => x * 2);
+    }
+    console.log(fn.myApply(a));//[2, 4, 6, 8, 10]
+*/
+Function.prototype.myApply = function (context) {
+    var obj = context || window;
+    obj.fn = this;
+    var result = arguments[1] ? obj.fn(arguments[1]) : obj.fn([]);
+
+    delete obj.fn;
+    return result;
+}
+
+//实现一个bind方法
+/*
+    //例子：
+    var obj = { a: 1 };
+
+    function fn() {
+        console.log(this.a);
+    }
+    fn.myBind(obj)();//1
+*/
+Function.prototype.myBind = function (obj) {
+    if (typeof this !== 'function') throw new Error('not a function');
+    var self = this;
+    var args = [...arguments].slice(1);
+
+    return function F() {
+        if (this instanceof F) {
+            return new self(...args, ...arguments);
+        }
+        return self.apply(obj, args.concat([...arguments]));
+    }
+}
+
+//实现instanceof原理
+function myInstanceof(left, right) {
+    var prototype = right.prototype;
+
+    left = left.__proto__;
+    // 判断对象的类型__proto__是否等于类型的原型prototype
+    while (true) {
+        if (left === null) {
+            return false;
+        }
+        if (prototype === left) {
+            return true;
+        }
+        left = left.__proto__;
+    }
+}
+
+//利用模板字符串将各个参数按照原来的位置拼合回去
+/*
+    var total = 30;
+    var msg = passthru`The total is ${total} (${total*1.05} with tax)`;
+    msg // "The total is 30 (31.5 with tax)"
+*/
+function passthru(literals) {
+    var result = '';
+    var i = 0;
+
+    while (i < literals.length) {
+        result += literals[i++];
+        if (i < arguments.length) {
+            result += arguments[i];
+        }
+    }
+    return result;
+}
 
 //判断是否为0和正负0
 function isZero(num) {
@@ -8835,6 +8955,51 @@ var pullLoading = function (This, apiFn, json, list, endFn1, endFn2, dataName, p
             $(document).off('touchend', touchend);
         }
     });
+}
+
+//保存搜索的参数
+function searchParamsSave() {
+    let key = 'searchParams';
+    let whiteList = ['/orderManagement/revisitOrderDetail', '/orderManagement/drugOrderDetail', '/orderManagement/consultOrderDetail', '/essentialData/orgDetail', '/essentialData/doctorDetail', 'TenantInfo'];
+    let toObj = {};
+    let fromObj = {};
+
+    return {
+        created() {
+            let { name } = this.$route;
+            name = name.replace('Management', '');
+            let params = sStore.get(name);
+
+            if (params) {
+                this.params = params;
+                this.currentPage = params.pageNo;
+            }
+            window.onunload = () => {
+                sStore.remove(name);
+            };
+        },
+        beforeDestroy() {
+            let { name } = this.$route;
+            let params = this.params;
+
+            name = name.replace('Detail', '').replace('Info', '');
+            console.log('销毁', toObj);
+            if (!whiteList.includes(toObj.path) && !whiteList.includes(toObj.name)) {
+                sStore.remove(name);
+                console.log('删除');
+            } else {
+                if (params) {
+                    sStore.set(name, params);
+                    console.log('保存');
+                }
+            }
+        },
+        beforeRouteLeave(to, from, next) {
+            toObj = to;
+            fromObj = from;
+            next();
+        },
+    };
 }
 
 /*
