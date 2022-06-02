@@ -36,6 +36,8 @@
         9.1、react项目中用到
     10、严格模式
         10.1、严格模式使用规则
+    11、前端数据库
+        11.1、indexedDB
 */
 
 /*
@@ -955,6 +957,18 @@ var cssVar = {
     1.4、增强函数
 */
 
+//纯数字多维数组的includes方法（使用正则匹配）
+function Includes(arr, number) {
+    return !!arr.toString().match(new RegExp(`(?<!(\\d|-))${number}(?!(\\d|-))`));
+}
+
+//判断数据类型的方法（根据Object.prototype.toString）
+function type(obj) {
+    var str = Object.prototype.toString.call(obj);
+
+    return str.match(/\[object (.*?)\]/)[1].toLowerCase();
+}
+
 //判断数据类型的方法（对typeof的增强，9种常用类型的判断，返回小写字符串）
 function Type(obj) {
     var arr = ['null', 'undefined', 'number', 'string', 'boolean', 'nan', 'array', 'object', 'function'];
@@ -1062,6 +1076,47 @@ function jsonHasKey(json, key) {
         return false;
     }
     return key in json;
+}
+
+//console格式化封装
+//type（console类型）
+//format（console格式）
+//style（format为css时可以设置样式。注意，样式不能用小驼峰的写法）
+/*
+    myConsole('log','css',{'color':'red','background-color':'blue'})('红色字蓝色背景')
+*/
+function myConsole(type, format, style) {
+    var type = type || 'log';
+    var api = console[type];
+
+    if (arguments.length) {
+        var formatJson = {
+            string: '%s',
+            integer: '%d',
+            float: '%f',
+            dom: '%o',
+            js: '%O',
+            css: '%c',
+        };
+        var formatKey = formatJson[format];
+        var fn = function () {
+            if (format == 'css') {
+                var params = Array.from(arguments);
+                var styleStr = '';
+
+                for (var attr in style) {
+                    styleStr += `${attr}:${style[attr]};`;
+                }
+                api.apply(null, [].concat(`${formatKey} ${params.slice(0,1)}`, styleStr, params.slice(1)));
+            } else {
+                api.apply(null, [formatKey, Array.from[arguments]]);
+            }
+        };
+
+        return fn;
+    } else {
+        return api;
+    }
 }
 
 /*
@@ -1722,25 +1777,20 @@ function getPrefix() {
     }
 }
 
-//查看键值修正版
+//查看键值
 function keyCode() {
     document.onkeyup = function (ev) {
         var ev = ev || event;
         var oP = document.createElement('p');
-        var aString = String.fromCharCode(ev.keyCode);
-        var json = { 27: 'Esc', 112: 'F1', 113: 'F2', 114: 'F3', 115: 'F4', 116: 'F5', 117: 'F6', 118: 'F7', 119: 'F8', 120: 'F9', 121: 'F10', 122: 'F11', 123: 'F12', 44: 'PrtScr', 145: 'Scroll', 19: 'Pause', 192: '`', 189: '-', 187: '=', 8: '←删除', 45: 'Insert', 36: 'Home', 33: 'PgUp', 144: '数字区 NumLock', 111: '数字区 /', 106: '数字区 *', 109: '数字区 -', 9: 'Tab', 219: '[', 221: ']', 13: 'Enter', 46: 'Delete', 35: 'End', 34: 'PgDn', 103: '数字区 7', 104: '数字区 8', 105: '数字区 9', 107: '数字区 +', 20: 'Capslock', 186: '：', 222: '’', 220: '｜', 100: '数字区 4', 101: '数字区 5', 102: '数字区 6', 16: 'Shift', 188: '，', 190: '。', 191: '/', 38: '方向↑', 97: '数字区 1', 98: '数字区 2', 99: '数字区 3', 17: 'Ctrl', 91: '左Window', 92: '右Window', 18: 'Alt', 32: '空格', 93: '打印', 37: '方向←', 40: '方向↓', 39: '方向→', 96: '数字区 0', 110: '数字区 .' };
 
-        if (json[ev.keyCode]) {
-            aString = json[ev.keyCode];
-        }
-        oP.innerHTML = '按键' + ':' + aString + ' ' + '键值' + ':' + ev.keyCode;
+        oP.innerHTML = '按键' + ':' + ev.key + ' ' + '键值' + ':' + ev.keyCode;
         document.body.appendChild(oP);
     };
 }
 
 //复制文字到剪切板，输入框和元素都可以兼容
 //obj（需要复制的元素）
-//command（扩展命令，默认是复诊，可以剪切'cut'、删除'delete'）
+//command（扩展命令，默认是复制，可以剪切'cut'、删除'delete'）
 function copyText(obj, command) {
     var command = command || 'copy';
 
@@ -1959,6 +2009,27 @@ function onPaste(obj, endFn) {
     }
 }
 
+//获取粘贴的文件
+/*
+    document.getElementById('paste').addEventListener('paste', (ev) => {
+        getPasteFile(ev, (file) => {
+            console.log('file', file);
+        })
+    })
+*/
+function getPasteFile(ev, callback) {
+    var items = (ev.clipboardData || window.clipboardData).items
+    if (items && items.length) {
+        var reader = new FileReader()
+        if (items[0].kind != 'file') return console.log('请粘贴文件')
+        var file = items[0].getAsFile()
+        reader.readAsDataURL(file)
+        reader.onload = function () {
+            callback && callback(file)
+        }
+    }
+}
+
 //图片文件转base64字符串
 function imgFilesToBase64(files, endFn) {
     var files = files || [];
@@ -2004,12 +2075,107 @@ function preview(oInp, oImg) {
     }
 }
 
+//blob对象转字符串
+function blobToString(blob, endFn) {
+    var reader = new FileReader();
+
+    reader.readAsText(blob);
+    reader.onload = function (ev) {
+        endFn && endFn(reader.result);
+    };
+}
+
+//根据服务器图片地址转换成本地blob图片地址
+/*
+    注意：图片地址不能跨域
+    previewImage.getBlobUrl('https://asset.tsign.cn/apps/forward-front/prod/V1.20220517.112157/img/banner.8bfcd42b.png', function (blobUrl) {
+        console.log(blobUrl)
+    })
+*/
+var previewImage = {
+    getBlobUrl(url, callback) { //图片地址转成blob地址
+        var self = this;
+        var oImg = new Image();
+
+        oImg.src = url
+        oImg.crossOrigin = 'anonymous';
+        oImg.onload = function () {
+            var base64 = self.imgToBase64(oImg);
+            var blob = self.base64toBlob(base64);
+            var file = self.blobToFile(blob, self.getFileName(url))
+            var windowUrl = window.URL || window.webkitURL;
+            var blobUrl = windowUrl.createObjectURL(file);
+            callback && callback(blobUrl)
+        };
+        oImg.onerror = function (err) {
+            console.log('err', err)
+        }
+    },
+    imgToBase64(img) { //canvas转base64
+        var oC = document.createElement('canvas');
+        var oGc = oC.getContext('2d');
+        var suffix = img.src.substring(img.src.lastIndexOf('.') + 1).toLowerCase();
+
+        oC.width = img.width;
+        oC.height = img.height;
+        oGc.drawImage(img, 0, 0, img.width, img.height);
+        return oC.toDataURL(`image/${suffix}`);
+    },
+    base64toBlob(base64) { //base64转Blob
+        var arr = base64.split(',');
+        var type = arr[0].match(/:(.+);/)[1];
+        var raw = window.atob(arr[1]);
+        var uInt8Array = new Uint8Array(raw.length);
+
+        for (var i = 0; i < raw.length; i++) {
+            uInt8Array[i] = raw.charCodeAt(i);
+        }
+        return new Blob([uInt8Array], { type: type });
+    },
+    blobToFile(blob, filename) { //blob转file，edge浏览器不支持new File对象，所以用以下方法兼容
+        blob.lastModifiedDate = new Date();
+        blob.name = filename;
+        return blob;
+    },
+    getFileName(url) { // 根据url获取文件名
+        var posIndex = url.lastIndexOf('/');
+        return url.substring(posIndex + 1);
+    },
+};
+
+//通过get请求文件响应为blob类型，并指定文件名称下载
+function downloadFile(url, fileName) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('get', url, true);
+    xhr.responseType = 'blob';
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4) {
+            if (xhr.status == 200) {
+                var oA = document.createElement('a');
+                var href = window.URL.createObjectURL(xhr.response);
+
+                oA.href = href;
+                oA.download = fileName;
+                oA.style.display = 'none';
+                document.body.appendChild(oA);
+                oA.click();
+                document.body.removeChild(oA);
+                window.URL.revokeObjectURL(href);
+            } else {
+                console.log('请求状态错误', xhr.status)
+            }
+        }
+    };
+    xhr.send();
+};
+
 //blob文件下载
 //注意：需要设置请求头responseType: 'blob'
 //blobData（blob数据）
 //fileName（文件名）
 //suffix（转化文件的后缀名称）
-function blobFileDownload(blobData, fileName, suffix) {
+//toUInt8Array（blobData是否需要转Uint8Array）
+function blobFileDownload(blobData, fileName, suffix, toUInt8Array) {
     var typeJson = {
         docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         dotx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
@@ -2018,9 +2184,20 @@ function blobFileDownload(blobData, fileName, suffix) {
         potx: 'application/vnd.openxmlformats-officedocument.presentationml.template',
         xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         xltx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
+        zip: 'application/zip',
+        rar: 'application/x-rar-compressed',
     };
     var suffix = suffix || 'docx';
     var type = typeJson[suffix] + ';charset=utf-8';
+    if (toUInt8Array) {
+        var raw = window.atob(blobData);
+        var uInt8Array = new Uint8Array(raw.length);
+        for (var i = 0; i < raw.length; i++) {
+            uInt8Array[i] = raw.charCodeAt(i);
+        }
+        blobData = uInt8Array;
+        fileName += `.${suffix}`;
+    }
     var blob = new Blob([blobData], { type: type });
     var oA = document.createElement('a');
     var href = window.URL.createObjectURL(blob);
@@ -2032,6 +2209,71 @@ function blobFileDownload(blobData, fileName, suffix) {
     oA.click();
     document.body.removeChild(oA);
     window.URL.revokeObjectURL(href);
+}
+
+//数组转blob对象并下载为excel文件
+//注意：需要引入xlsx.core.min.js插件，arrayTable格式为[[名字,...],[张三,...],...]
+function arrayExcelDownload(arrayTable, sheetName) {
+    //字符串转ArrayBuffer
+    function strToArrayBuffer(str) {
+        var buffer = new ArrayBuffer(str.length);
+        var view = new Uint8Array(buffer);
+        for (var i = 0; i != str.length; i++) {
+            view[i] = str.charCodeAt(i) & 0xFF;
+        }
+        return buffer;
+    }
+    var workbook = {
+        SheetNames: [sheetName],
+        Sheets: {
+            [sheetName]: XLSX.utils.aoa_to_sheet(arrayTable), //利用工具转workbook对象
+        },
+    };
+    var config = {
+        bookType: 'xlsx', //要生成的文件类型
+        bookSST: false, //是否生成Shared String Table，官方解释是，如果开启生成速度会下降，但在低版本IOS设备上有更好的兼容性
+        type: 'binary',
+    };
+    var workbookStr = XLSX.write(workbook, config); //利用工具转workbook字符串
+    var blob = new Blob([strToArrayBuffer(workbookStr)], { type: 'application/octet-stream' });
+
+    blobFileDownload(blob, sheetName, 'xlsx');
+}
+
+//html转canvas图片再转pdf并下载
+//注意：需要引入html2canvas和jspdf
+function htmlPdfDownload(dom, pdfName) {
+    dom.style.backgroundColor = '#fff'; //不设置背景为白色，则默认黑色
+    var canvas = html2canvas(dom, {
+        onrendered: function (canvas) {
+            var widthA4 = 595;
+            var heightA4 = 842;
+            var contentWidth = canvas.width;
+            var contentHeight = canvas.height;
+            var pageHeight = contentWidth / widthA4 * heightA4; //一页pdf显示html页面生成canvas的高度
+            var leftHeight = contentHeight; //未生成的pdf的html页面高度
+            var position = 0; //页面偏移
+            var imgWidth = widthA4; //html中的canvas在pdf中图片的宽高
+            var imgHeight = widthA4 / contentWidth * contentHeight;
+            var pageData = canvas.toDataURL('image/jpeg', 1.0);
+            var PDF = new jsPDF('', 'pt', 'a4');
+
+            //需要区分html页面的实际高度和生成pdf页面的高度
+            if (leftHeight < pageHeight) { //内容未超过pdf一页显示的范围，无需分页
+                PDF.addImage(pageData, 'JPEG', 0, 0, imgWidth, imgHeight);
+            } else {
+                while (leftHeight > 0) {
+                    PDF.addImage(pageData, 'JPEG', 0, position, imgWidth, imgHeight);
+                    leftHeight -= pageHeight;
+                    position -= heightA4;
+                    if (leftHeight > 0) { //避免添加空白页
+                        PDF.addPage();
+                    }
+                }
+            }
+            PDF.save(`${pdfName}.pdf`);
+        },
+    });
 }
 
 //判断是否是手机浏览器
@@ -2063,6 +2305,12 @@ function isQQ(bool) {
 //判断是否是苹果浏览器
 function isSafari() {
     var reg = /(pad|iPhone|Mac|ios)/i;
+    return window.navigator.userAgent.match(reg) ? true : false;
+}
+
+//判断是否是钉钉浏览器
+function isDingTalk() {
+    var reg = /(DingTalk)/i;
     return window.navigator.userAgent.match(reg) ? true : false;
 }
 
@@ -2828,13 +3076,15 @@ function axiosWrap(config) {
         var url = (hostname == 'localhost' || hostname == '127.0.0.1' || hostname == '172.16.21.92') ? (config.url ? config.url : '/api') : '/';
         var method = config.method ? config.method.toLowerCase() : '';
         var paramsOrData = method == 'get' || method == 'delete' || config.urlJointParams ? 'params' : 'data';
+        var resultParams = !config.isForm ? config.params : jsonToStr(config.params);
         var configResult = {
             url: url,
             method: method,
-            [paramsOrData]: config.params,
+            [paramsOrData]: resultParams,
             headers: config.headers || {},
             timeout: config.timeout || 20000,
             responseType: config.responseType || 'json', //默认值是json，可选项 'arraybuffer', 'blob', 'document', 'json', 'text', 'stream'
+            withCredentials: config.withCredentials || false, //跨域请求时发送Cookie
             onUploadProgress: function (ev) {
                 config.upFn && config.upFn(ev);
             },
@@ -3140,7 +3390,7 @@ Socket.prototype = {
         }
     },
     send: function (params, successFn, finallyFn, intervalSendFn) {
-        //send函数中的params指定reqToken（注意在别重复）时，可以给clearOne传reqToken取消订阅该业务的函数，否则clearOne只能取消最后一个订阅函数
+        //send函数中的params指定reqToken（注意别重复）时，可以给clearOne传reqToken取消订阅该业务的函数，否则clearOne只能取消最后一个订阅函数
         var This = this;
         var key = params.reqToken || soleString32();
         var messageFn = This.messageFn(key, successFn, finallyFn);
@@ -3201,6 +3451,21 @@ Socket.prototype = {
 /*
     1.9、项目中使用
 */
+
+//活动页每天只显示一次
+function onceADay(endFn) {
+    var onceADayOldDate = localStorage.getItem('onceADayOldDate');
+    var myDate = new Date();
+    var oYear = myDate.getFullYear();
+    var oMonth = myDate.getMonth();
+    var oDate = myDate.getDate();
+    var currentDate = `${oYear}/${oMonth+1}/${oDate}`;
+
+    if (!onceADayOldDate || onceADayOldDate && +new Date(onceADayOldDate) < +new Date(currentDate)) {
+        localStorage.setItem('onceADayOldDate', currentDate);
+        endFn && endFn(currentDate);
+    }
+}
 
 //获取最大版本号
 function getMaxVersion(versions) {
@@ -5934,7 +6199,7 @@ function yydTabBar(obj, str, endFn) {
 //文字蛛网效果
 //obj(生成蛛网效果文字的父容器)
 //scaleC(文字半径的比例，越大影响的文字越多)
-//scaleB(文字便宜的比例，越大文字偏移得越大)
+//scaleB(文字偏移的比例，越大文字偏移得越大)
 function cobweb(obj, scaleC, scaleB) {
     var str = '';
     var iW = parseInt(getStyle(obj, 'width'));
@@ -7200,6 +7465,183 @@ function WXSDK(config, type, params, readyFn) {
     6.1、各种参考函数
 */
 
+//获取数据大小
+function getDataSize(data) {
+    var size = JSON.stringify(data).length * 2;
+    var unitArr = ['bytes', 'KB', 'MB', 'GB', 'TB'];
+    var unitIndex = 0;
+
+    while (size > 1024) {
+        size /= 1024;
+        unitIndex++;
+    }
+    console.log('数据大小：', size.toFixed(2), unitArr[unitIndex])
+}
+
+//根据performance.timing计算网页加载耗时
+function getLoadedTime() {
+    var timing = performance.timing
+    var loadEventEnd = timing.loadEventEnd
+    var navigationStart = timing.navigationStart
+    var loadedTime = loadEventEnd - navigationStart
+    console.log(`网页加载耗时：${loadedTime}毫秒`)
+    return loadedTime
+}
+
+//xml字符串解析成xml节点
+/*
+    var xmlStr = `
+        <note>
+        <to>George</to>
+        <from>John</from>
+        <heading>Reminder</heading>
+        <body>Don't forget the meeting!</body>
+        </note>
+    `;
+    console.log(XMLParse(xmlStr));
+*/
+function XMLParse(xmlStr) {
+    var xmlDoc = null;
+    if (window.DOMParser) {
+        parser = new DOMParser();
+        xmlDoc = parser.parseFromString(xmlStr, 'text/xml');
+    } else {
+        xmlDoc = new ActiveXObject('Microsoft.XMLDOM');
+        xmlDoc.async = 'false';
+        xmlDoc.loadXML(xmlStr);
+    }
+    return xmlDoc;
+}
+
+//根据坐标计算三角形面积
+/*
+    参考公式：
+    鞋带公式，用于计算任意多边形的面积，可用于计算三角形的面积；
+    海伦公式，从三个顶点得到三边长，并使用海伦公式计算出面积；
+    三角形面积公式 S = 1/2 * a * b * sin(C)，首先得到两边的长度，通过叉积算出夹角的正弦值，并使用公式计算出面积。
+*/
+function getArea(a, b, c) {
+    return 0.5 * Math.abs(a[0] * b[1] + b[0] * c[1] + c[0] * a[1] - a[1] * b[0] - b[1] * c[0] - c[1] * a[0]);
+}
+
+//字母表达式转成数字
+function letterToNumber(letter) {
+    letter = letter.toUpperCase();
+    var result = 0;
+
+    for (var i = 0; i < letter.length; i++) {
+        var num = letter.charAt(i).charCodeAt() - 64;
+
+        result = result * 26 + num;
+    }
+    return result;
+}
+
+//数字转成字母表达式
+function numberToLetter(number) {
+    var result = [];
+
+    while (number) {
+        var remainder = number % 26 ? number % 26 : 26;
+        var letter = String.fromCharCode(remainder + 64);
+
+        result.unshift(letter);
+        number = Math.floor((number - remainder) / 26);
+    }
+    return result.join('');
+}
+
+//实现JSON.stringify
+window.MY_JSON = {
+    parse: function (sJSON) {
+        return eval('(' + sJSON + ')');
+    },
+    stringify: (function () {
+        var toString = Object.prototype.toString;
+        var isArray =
+            Array.isArray ||
+            function (a) {
+                return toString.call(a) === '[object Array]';
+            };
+        var escMap = {
+            '"': '\\"',
+            '\\': '\\\\',
+            '\b': '\\b',
+            '\f': '\\f',
+            '\n': '\\n',
+            '\r': '\\r',
+            '\t': '\\t',
+        };
+        var escFunc = function (m) {
+            return (
+                escMap[m] ||
+                '\\u' + (m.charCodeAt(0) + 0x10000).toString(16).substr(1)
+            );
+        };
+        var escRE = /[\\'\u0000-\u001F\u2028\u2029]/g;
+        return function stringify(value) {
+            if (value == null) {
+                return 'null';
+            } else if (typeof value === 'number') {
+                return isFinite(value) ? value.toString() : 'null';
+            } else if (typeof value === 'boolean') {
+                return value.toString();
+            } else if (typeof value === 'object') {
+                if (typeof value.toJSON === 'function') {
+                    return stringify(value.toJSON());
+                } else if (isArray(value)) {
+                    var res = '[';
+                    for (var i = 0; i < value.length; i++)
+                        res += (i ? ', ' : '') + stringify(value[i]);
+                    return res + ']';
+                } else if (toString.call(value) === '[object Object]') {
+                    var tmp = [];
+                    for (var k in value) {
+                        if (value.hasOwnProperty(k))
+                            tmp.push(stringify(k) + ': ' + stringify(value[k]));
+                    }
+                    return '{' + tmp.join(', ') + '}';
+                }
+            }
+            return '"' + value.toString().replace(escRE, escFunc) + '"';
+        };
+    })(),
+};
+
+//实现instanceof
+function myInstanceof(left, right) {
+    var leftVal = left.__proto__;
+    var rightVal = right.prototype;
+
+    while (leftVal) {
+        if (leftVal === rightVal) {
+            return true;
+        }
+        leftVal = leftVal.__proto__;
+    }
+    return false;
+}
+
+//实现addNum(1)(2)(3)(4, 5)
+function addNum() {
+    var sumArr = [];
+
+    concatNum.apply(null, arguments);
+
+    function concatNum() {
+        var arg = Array.prototype.slice.call(arguments);
+
+        sumArr = [].concat(sumArr, arg);
+        return concatNum;
+    }
+    concatNum.toString = function () {
+        return sumArr.reduce(function (prev, next) {
+            return prev + next;
+        }, 0);
+    }
+    return concatNum;
+}
+
 //实现一个call方法
 /*
     转换一下实现方法就是
@@ -7226,7 +7668,7 @@ function WXSDK(config, type, params, readyFn) {
 */
 Function.prototype.myCall = function (context) {
     var obj = context || window;
-    obj.fn = this; //   这一步可以看做是this其实就指的当前函数。
+    obj.fn = this; //   这一步可以看做是this其实就指的当前函数，即fn.myCall的fn。
     var args = [...arguments].slice(1); // 返回删除第一个元素的数组；
     var result = obj.fn(...args); // 调用函数
 
@@ -7270,7 +7712,7 @@ Function.prototype.myBind = function (obj) {
     var args = [...arguments].slice(1);
 
     return function F() {
-        if (this instanceof F) {
+        if (this instanceof F) { //应对fn.myBind(new (fn.myBind(obj)));
             return new self(...args, ...arguments);
         }
         return self.apply(obj, args.concat([...arguments]));
@@ -8513,6 +8955,7 @@ function changeSystem(value, bool) {
         };
 
         recursion(value);
+        result = result.split('').reverse().join('');
     } else {
         var arr = value.split('').reverse();
 
@@ -9002,6 +9445,24 @@ function searchParamsSave() {
     };
 }
 
+//vue重新打包后线上文件变化，加载报错后刷新
+//router（路由对象）
+/*
+  处理类似以下报错
+  'Loading chunk chunk-04db3957 failed.\n(missing: http://forward-front-forward-v1.projectk8s.tsign.cn/static/js/chunk-04db3957.1ff745b6.js)'
+*/
+function LoadingChunkErrorReload(router) {
+    router.onError(function (error) {
+        var reg = /Loading chunk.+failed/i;
+        var message = error.message || error;
+        var isChunkLoadFailed = reg.test(message);
+        if (isChunkLoadFailed) {
+            alert('检测到文件变化，需要刷新页面');
+            window.location.reload();
+        }
+    });
+}
+
 /*
     9.1、react项目中用到
 */
@@ -9327,3 +9788,228 @@ function useStrictRule() {
     console.log(rule);
     return rule['b-notes'];
 }
+
+/*
+    11.1、indexedDB
+*/
+
+//indexedDB操作封装
+/*
+    IDB.createTB('user', {
+        name: true,
+        age: false,
+        sex: false,
+    }, 'id');
+    IDB.initDB(null, null, (res1) => {
+        console.log(res1);
+    });
+    IDB.add('user', { id: 1, name: '张三', age: 10, sex: '男' }, (res) => console.log(res));
+    IDB.add('user', { id: 2, name: '李四', age: 11, sex: '男' }, (res) => console.log(res));
+    IDB.update('user', { id: 1, name: '张三改名', age: 12, sex: '男' }, (res) => console.log(res));
+    IDB.remove('user', 2, (res) => console.log(res));
+    IDB.get('user', 1, (res) => console.log(res));
+    IDB.getAll('user', (res) => console.log(res));
+    IDB.find('user', 'name', '张三改名', (res) => console.log(res));
+*/
+var IDB = {
+    db: null,
+    tb: {},
+    addList: [],
+    removeList: [],
+    updateList: [],
+    getList: [],
+    getAllList: [],
+    findList: [],
+    createTB: function (tableName, tableJson, keyPath) { //tableJson={keyName:uniqueBoolean};
+        this.tb[tableName] = {
+            tableName: tableName,
+            tableJson: tableJson,
+            keyPath: keyPath,
+        };
+        return this;
+    },
+    initDB: function (dbName, version, callback) {
+        if (!window.indexedDB) return console.log('浏览器不支持indexedDB');
+        var self = this;
+        var dbName = dbName || 'defaultIDB';
+        var version = version || 1;
+        var request = window.indexedDB.open(dbName, version);
+
+        request.onsuccess = function (event) {
+            self.db = request.result;
+            ['addList', 'removeList', 'updateList', 'getList', 'getAllList', 'findList'].forEach(function (item) {
+                while (self[item].length) {
+                    self[item].shift()();
+                }
+            });
+            callback && callback({
+                code: 0,
+                message: '数据库打开成功',
+                data: self.db,
+            });
+        };
+        request.onerror = function (event) {
+            callback && callback({
+                code: -1,
+                message: '数据库打开失败',
+                data: self.db,
+            });
+        };
+        request.onupgradeneeded = function (event) {
+            db = event.target.result;
+            for (let tableName in self.tb) {
+                var value = self.tb[tableName];
+                var tableJson = value.tableJson;
+                var keyPath = value.keyPath;
+                if (!db.objectStoreNames.contains(tableName)) {
+                    var config = {};
+                    if (!keyPath) {
+                        config = { autoIncrement: true };
+                    } else {
+                        config = { keyPath: keyPath };
+                    }
+                    var objectStore = db.createObjectStore(tableName, config);
+                    for (let attr in tableJson) {
+                        objectStore.createIndex(attr, attr, { unique: tableJson[attr] });
+                    }
+                    console.log(`新增${tableName}表`, `配置为：${JSON.stringify(config)}`, `结构为：${JSON.stringify(tableJson)}`);
+                }
+            }
+        }
+        return this;
+    },
+    handlerFn: function (handleName, tableName, data, callback, indexKey, indexValue) {
+        var self = this;
+        var handleJson = {
+            'add': {
+                apiName: 'add',
+                listName: 'addList',
+                successMessage: '数据写入成功',
+                errorMessage: '数据写入失败',
+            },
+            'remove': {
+                apiName: 'delete',
+                listName: 'removeList',
+                successMessage: '数据删除成功',
+                errorMessage: '数据删除失败',
+            },
+            'update': {
+                apiName: 'put',
+                listName: 'updateList',
+                successMessage: '数据更新成功',
+                errorMessage: '数据更新失败',
+            },
+            'get': {
+                apiName: 'get',
+                listName: 'getList',
+                successMessage: '数据获取成功',
+                errorMessage: '数据获取失败',
+            },
+            'getAll': {
+                apiName: 'openCursor',
+                listName: 'getAllList',
+                successMessage: '获取全部数据成功',
+                errorMessage: '获取全部数据失败',
+            },
+            'find': {
+                listName: 'findList',
+                successMessage: '数据查找成功',
+                errorMessage: '数据查找失败',
+            },
+        };
+        var handleData = handleJson[handleName];
+        var apiName = handleData.apiName;
+        var listName = handleData.listName;
+        var successMessage = handleData.successMessage;
+        var errorMessage = handleData.errorMessage;
+        var createFn = function () {
+            return function () {
+                if (!self.db.objectStoreNames.contains(tableName)) {
+                    callback && callback({
+                        code: -1,
+                        data: null,
+                        message: `无效操作，数据表${tableName}不存在`,
+                    });
+                    return;
+                }
+                var request = self.db.transaction([tableName], 'readwrite').objectStore(tableName);
+                var allData = [];
+                var params = data;
+                var result = params;
+
+                if (handleName == 'find') {
+                    request = request.index(indexKey).get(indexValue);
+                } else if (handleName == 'getAll') {
+                    request = request[apiName]();
+                } else {
+                    request = request[apiName](params);
+                }
+                request.onsuccess = function (event) {
+                    if (handleName == 'getAll') {
+                        var cursor = event.target.result;
+
+                        if (cursor) {
+                            allData.push(cursor.value);
+                            cursor.continue();
+                        } else {
+                            callback && callback({
+                                code: 0,
+                                data: allData,
+                                message: '获取全部数据成功',
+                            });
+                        }
+                    } else {
+                        if (handleName == 'get') {
+                            result = request.result;
+                        } else if (handleName == 'find') {
+                            result = event.target.result;
+                        }
+                        callback && callback({
+                            code: 0,
+                            data: result,
+                            message: successMessage,
+                        });
+                    }
+                };
+                request.onerror = function (event) {
+                    callback && callback({
+                        code: -1,
+                        data: result,
+                        message: errorMessage,
+                    });
+                };
+            };
+        };
+        var fn = createFn();
+        if (!self.db) {
+            self[listName].push(fn);
+        } else {
+            fn();
+        }
+        return this;
+    },
+    add: function (tableName, data, callback) {
+        this.handlerFn.apply(this, [].concat('add', Array.from(arguments)));
+        return this;
+    },
+    remove: function (tableName, data, callback) {
+        this.handlerFn.apply(this, [].concat('remove', Array.from(arguments)));
+        return this;
+    },
+    update: function (tableName, data, callback) {
+        this.handlerFn.apply(this, [].concat('update', Array.from(arguments)));
+        return this;
+    },
+    get: function (tableName, data, callback) {
+        this.handlerFn.apply(this, [].concat('get', Array.from(arguments)));
+        return this;
+    },
+    getAll: function (tableName, callback) {
+        this.handlerFn.apply(this, [].concat('getAll', [tableName, null, callback]));
+        return this;
+    },
+    find: function (tableName, indexKey, indexValue, callback) {
+        this.handlerFn.apply(this, [].concat('find', tableName, null, callback, indexKey, indexValue));
+        return this;
+    },
+};
